@@ -1,18 +1,18 @@
 identity:
-  name: kintone
-  author: r3yamauchi
+  name: kintone_query
+  author: r3-yamauchi
   label:
-    en_US: kintone
-    zh_Hans: kintone
-    ja_JP: kintone
-    pt_BR: kintone
+    en_US: kintone Query
+    zh_Hans: kintone Query
+    ja_JP: kintone クエリ
+    pt_BR: kintone Query
 description:
   human:
-    en_US: kintone Plugin
-    zh_Hans: kintone Plugin
-    ja_JP: kintoneプラグイン
-    pt_BR: kintone Plugin
-  llm: kintone Plugin
+    en_US: Query records from kintone app
+    zh_Hans: Query records from kintone app
+    ja_JP: kintoneアプリからレコードを検索
+    pt_BR: Query records from kintone app
+  llm: Query records from kintone app
 parameters:
   - name: kintone_domain
     type: string
@@ -23,7 +23,7 @@ parameters:
     human_description:
       en_US: "Your kintone domain (e.g., your-subdomain.cybozu.com)"
       ja_JP: "お使いのkintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）"
-    llm_description: kintone Plugin
+    llm_description: kintone domain where the app is hosted
     form: llm
 
   - name: kintone_app_id
@@ -35,7 +35,7 @@ parameters:
     human_description:
       en_US: "The ID of your kintone application"
       ja_JP: "使用するkintoneアプリのID"
-    llm_description: kintone Plugin
+    llm_description: ID of the kintone app to query
     form: llm
 
   - name: kintone_api_token
@@ -47,7 +47,7 @@ parameters:
     human_description:
       en_US: "API token generated from your kintone app"
       ja_JP: "kintone アプリで発行したAPIトークン"
-    llm_description: kintone Plugin
+    llm_description: API token with view permissions for the kintone app
     form: llm
 
   - name: query
@@ -63,7 +63,7 @@ parameters:
       zh_Hans: "Keyword or text to search in kintone"
       ja_JP: "kintoneへ渡すquery文字列"
       pt_BR: "Keyword or text to search in kintone"
-    llm_description: kintone Plugin
+    llm_description: Query string to filter records in kintone query format
     form: llm
 
   - name: fields

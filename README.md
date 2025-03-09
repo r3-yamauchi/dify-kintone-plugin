@@ -1,14 +1,79 @@
-## dify-kintone-plugin
+# dify-kintone-plugin
 
-**Author:** r3yamauchi
-**Version:** 0.0.3
+**Author:** r3-yamauchi
+**Version:** 0.0.4
 **Type:** tool
 
-### Description
+## Description
 
-これは [kintone](https://kintone.cybozu.co.jp/) データを取得する [Dify](https://dify.ai/jp) プラグインのサンプルです。
+これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを取得するために使用できる [Dify](https://dify.ai/jp) プラグインです。
 
-[Difyのプラグイン機能](https://docs.dify.ai/ja-jp/plugins/introduction) は現在ベータ版であり、使用方法の分かる方のみ使用してください。後日ブログへ簡単な説明を投稿する予定です。
+使用時のイメージを [ブログ](https://www.r3it.com/blog/dify-kintone-20250305-yamauchi) で紹介しています。
+
+## Features
+
+- kintoneのドメインとアプリIDを指定してレコードを取得
+- kintoneのドメインとアプリIDを指定してレコードを1件新規追加
+
+## Prerequisites
+
+- 対象のkintoneアプリを閲覧する権限を持つAPIトークン
+
+APIトークン以外の認証方式に対応していません。 Basic認証や SAML認証にも対応していません。
+
+## Usage Examples
+
+### 1. kintone Query
+
+#### 1. 指定したkintoneアプリのすべてのレコードを取得する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz"
+}
+```
+
+#### 2. `field1` の値が100以上のレコードのみ取得する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "query": "field1 >= 100"
+}
+```
+
+#### 3. 指定したフィールドの値のみを取得する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "fields": "field1, field2, field3"
+}
+```
+
+### 2. kintone Add Record
+
+#### 1. レコードを 1件新規追加する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "record_data": {
+    "text_field": {"value": "サンプルテキスト"},
+    "number_field": {"value": "100"},
+    "date_field": {"value": "2025-03-09"}
+  }
+}
+```
+
 
 ** 「kintone」はサイボウズ株式会社の登録商標です。
 

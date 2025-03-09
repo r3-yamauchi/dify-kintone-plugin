@@ -1,5 +1,5 @@
 identity:
-  author: r3yamauchi
+  author: r3-yamauchi
   name: kintone
   label:
     en_US: kintone
@@ -14,6 +14,7 @@ identity:
   icon: icon.svg
 tools:
   - tools/kintone_query.yaml
+  - tools/kintone_add_record.yaml
 extra:
   python:
     source: provider/kintone_provider.py
