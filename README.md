@@ -1,7 +1,7 @@
 # dify-kintone-plugin
 
 **Author:** r3-yamauchi
-**Version:** 0.0.4
+**Version:** 0.0.5
 **Type:** tool
 
 ## Description
@@ -14,6 +14,8 @@
 
 - kintoneのドメインとアプリIDを指定してレコードを取得
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
+- kintoneのドメインとアプリIDを指定して複数レコードを一括追加・更新（upsert）
+- kintoneからファイルをダウンロード
 
 ## Prerequisites
 
@@ -74,6 +76,89 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 }
 ```
 
+### 3. kintone Upsert Records
+
+#### 1. 複数のレコードを一度に追加する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "records_data": {
+    "records": [
+      {
+        "record": {
+          "text_field": {"value": "サンプルテキスト1"},
+          "number_field": {"value": "100"},
+          "date_field": {"value": "2025-03-09"}
+        }
+      },
+      {
+        "record": {
+          "text_field": {"value": "サンプルテキスト2"},
+          "number_field": {"value": "200"},
+          "date_field": {"value": "2025-03-10"}
+        }
+      }
+    ]
+  }
+}
+```
+
+#### 2. updateKeyを使用して既存のレコードを更新する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "records_data": {
+    "records": [
+      {
+        "updateKey": {
+          "field": "key_field",
+          "value": "unique_value_1"
+        },
+        "record": {
+          "text_field": {"value": "更新テキスト1"},
+          "number_field": {"value": "150"}
+        }
+      },
+      {
+        "updateKey": {
+          "field": "key_field",
+          "value": "unique_value_2"
+        },
+        "record": {
+          "text_field": {"value": "更新テキスト2"},
+          "number_field": {"value": "250"}
+        }
+      }
+    ]
+  }
+}
+```
+
+### 4. kintone Download File
+
+#### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "file_key": "20250301010101E3C4F3D8871A4BA28360BA3F798D0455165"
+}
+```
+
+#### ファイルキーの取得方法
+
+ファイルキーを取得するには：
+
+1. `kintone_query` ツールを使用して添付ファイルフィールドを含むレコードを取得
+2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
+3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
 ** 「kintone」はサイボウズ株式会社の登録商標です。
 
