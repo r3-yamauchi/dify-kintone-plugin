@@ -119,27 +119,15 @@ class KintoneUpsertRecordsTool(Tool):
             # 成功メッセージを返す
             record_count = len(records)
             if record_count > 0:
-                success_message = f"{record_count}件のレコードが正常に更新/追加されました。"
-                
-                # レコードIDの一覧を表示（最大10件まで）
-                if "ids" in data:
-                    ids = data.get("ids", [])
-                    if ids:
-                        id_list = ", ".join(str(id) for id in ids[:10])
-                        if len(ids) > 10:
-                            id_list += f" 他 {len(ids) - 10}件"
-                        success_message += f"\n追加されたレコードID: {id_list}"
-                
-                # 更新キーの一覧を表示（最大10件まで）
-                if "revisions" in data:
-                    revisions = data.get("revisions", [])
-                    if revisions:
-                        revision_list = ", ".join(str(rev) for rev in revisions[:10])
-                        if len(revisions) > 10:
-                            revision_list += f" 他 {len(revisions) - 10}件"
-                        success_message += f"\n更新されたレコードのリビジョン: {revision_list}"
-                
-                yield self.create_text_message(success_message)
+                inserted_count = len(data.get("ids", []))
+                updated_count = len(data.get("revisions", []))
+
+                result_payload = {
+                    "add": inserted_count,
+                    "updated": updated_count,
+                }
+                payload_text = json.dumps(result_payload, ensure_ascii=False)
+                yield self.create_text_message(payload_text)
             else:
                 yield self.create_text_message("レコードの更新/追加処理は完了しましたが、処理されたレコードはありませんでした。")
 
