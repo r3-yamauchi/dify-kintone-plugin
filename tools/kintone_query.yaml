@@ -77,6 +77,18 @@ parameters:
       ja_JP: "kintoneから取得するフィールド名をカンマ区切りで指定（例: フィールド1,フィールド2,フィールド3）"
     llm_description: "Comma-separated list of field names to retrieve from kintone records"
     form: llm
+  - name: request_timeout
+    type: number
+    required: false
+    default: 30
+    label:
+      en_US: "Request Timeout (seconds)"
+      ja_JP: "リクエストタイムアウト（秒）"
+    human_description:
+      en_US: "Timeout in seconds for each kintone API request. Default is 10 seconds."
+      ja_JP: "kintone APIリクエストのタイムアウト秒数。既定値は10秒です。"
+    llm_description: "Timeout in seconds for each API call; defaults to 10."
+    form: llm
 extra:
   python:
     source: tools/kintone_query.py

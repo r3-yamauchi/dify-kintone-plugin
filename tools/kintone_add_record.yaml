@@ -61,6 +61,19 @@ parameters:
       ja_JP: "新規レコードとして追加するJSONフォーマットのデータ（例: {\"フィールドコード1\": {\"value\": \"値1\"}, \"フィールドコード2\": {\"value\": \"値2\"}}）"
     llm_description: "JSON format data to add as a new record in kintone"
     form: llm
+  - name: request_timeout
+    type: number
+    required: false
+    default: 10
+    label:
+      en_US: "Request Timeout (seconds)"
+      ja_JP: "リクエストタイムアウト（秒）"
+    human_description:
+      en_US: "Timeout in seconds for the kintone API request. Default is 10 seconds."
+      ja_JP: "kintone APIリクエストのタイムアウト秒数。既定値は10秒です。"
+    llm_description: "Timeout in seconds for the API call; defaults to 10."
+    form: llm
+
 extra:
   python:
     source: tools/kintone_add_record.py

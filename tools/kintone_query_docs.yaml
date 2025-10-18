@@ -5,13 +5,11 @@ identity:
     en_US: kintone Query Docs
     zh_Hans: kintone 查询文档
     ja_JP: kintone クエリ仕様
-    pt_BR: kintone Query Docs
 description:
   human:
-    en_US: Return the official kintone query grammar reference extracted from bundled documentation
-    ja_JP: 参考用ドキュメントから抽出した kintone クエリ構文の仕様を返します
+    en_US: Return the kintone query grammar reference extracted from bundled documentation
+    ja_JP: kintone クエリ構文の仕様を返します
     zh_Hans: 返回捆绑文档中提取的 kintone 查询语法说明
-    pt_BR: Retorna a especificação da sintaxe de consulta do kintone extraída da documentação
   llm: Provide the kintone query language specification from the packaged reference file
 parameters: []
 extra:

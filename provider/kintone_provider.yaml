@@ -18,7 +18,9 @@ tools:
   - tools/kintone_upsert_records.yaml
   - tools/kintone_download_file.yaml
   - tools/kintone_get_fields.yaml
+  - tools/kintone_validate_record_data.yaml
   - tools/kintone_query_docs.yaml
+  - tools/kintone_record_data_docs.yaml
 extra:
   python:
     source: provider/kintone_provider.py

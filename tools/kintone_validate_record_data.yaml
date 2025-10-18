@@ -1,0 +1,65 @@
+identity:
+  name: kintone_validate_record_data
+  author: r3-yamauchi
+  label:
+    en_US: kintone Validate Record Data
+    zh_Hans: kintone 记录数据验证
+    ja_JP: kintone record_data検証
+description:
+  human:
+    en_US: Validate record_data JSON before calling kintone_add_record
+    ja_JP: kintone_add_recordに渡すrecord_dataのJSONを事前検証します
+    zh_Hans: 在调用 kintone_add_record 前验证 record_data JSON
+  llm: Validate the record_data JSON for kintone_add_record, returning the sanitized payload
+parameters:
+  - name: kintone_domain
+    type: string
+    required: true
+    label:
+      en_US: "kintone Domain"
+      ja_JP: "cybozu.com ドメイン"
+    human_description:
+      en_US: "Your kintone domain (e.g., your-subdomain.cybozu.com)"
+      ja_JP: "お使いのkintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）"
+    llm_description: kintone domain where the app is hosted
+    form: llm
+
+  - name: kintone_app_id
+    type: number
+    required: true
+    label:
+      en_US: "kintone App ID"
+      ja_JP: "kintone アプリID"
+    human_description:
+      en_US: "The ID of your kintone application"
+      ja_JP: "使用するkintoneアプリのID"
+    llm_description: ID of the kintone app to validate against
+    form: llm
+
+  - name: kintone_api_token
+    type: secret-input
+    required: true
+    label:
+      en_US: "kintone API Token"
+      ja_JP: "対象の kintoneアプリの APIトークン"
+    human_description:
+      en_US: "API token generated from your kintone app with permission to read form settings"
+      ja_JP: "kintone アプリで発行したフォーム設定参照権限を持つAPIトークン"
+    llm_description: API token with access to the app form settings
+    form: llm
+
+  - name: record_data
+    type: string
+    required: true
+    label:
+      en_US: "Record Data"
+      ja_JP: "レコードデータ"
+    human_description:
+      en_US: "record_data JSON string intended for kintone_add_record"
+      ja_JP: "kintone_add_recordに渡す予定のrecord_data JSON文字列"
+    llm_description: record_data JSON to validate
+    form: llm
+extra:
+  python:
+    source: tools/kintone_validate_record_data.py
+    class: KintoneValidateRecordDataTool

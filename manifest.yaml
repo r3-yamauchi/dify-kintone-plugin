@@ -1,4 +1,4 @@
-version: 0.0.6
+version: 0.0.7
 type: plugin
 author: r3-yamauchi
 name: kintone_integration
@@ -22,7 +22,7 @@ plugins:
   tools:
     - provider/kintone_provider.yaml
 meta:
-  version: 0.0.6
+  version: 0.0.7
   arch:
     - amd64
     - arm64

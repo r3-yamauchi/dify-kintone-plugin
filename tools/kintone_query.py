@@ -91,6 +91,12 @@ class KintoneTool(Tool):
             # カンマ区切り文字列をリストに変換
             fields_list = [field.strip() for field in fields_param.split(',')]
 
+        try:
+            timeout_seconds = self._resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
+        except ValueError:
+            yield self.create_text_message("request_timeout には正の数値を指定してください。")
+            return
+
         # APIリクエスト用のヘッダー設定
         headers = {
             "X-Cybozu-API-Token": kintone_api_token,
@@ -128,7 +134,7 @@ class KintoneTool(Tool):
                         url,
                         headers=headers,
                         json=request_body,  # paramsの代わりにjsonを使用
-                        timeout=10  # タイムアウトを10秒に設定
+                        timeout=timeout_seconds
                     )
                     # HTTPエラーがあれば例外を発生
                     response.raise_for_status()
@@ -188,32 +194,27 @@ class KintoneTool(Tool):
 
             # 検索結果の有無を確認
             if not all_records:
+                yield self.create_variable_message("records", [])
                 yield self.create_text_message(f"'{query_str}' に一致するレコードは見つかりませんでした。")
                 return
 
             # レコードの全フィールドを取得してテキストを作成
-            lines = []
-            lines.append(f"取得したレコード件数: {len(all_records)}")
+            lines = [f"取得したレコード件数: {len(all_records)}"]
 
-            # 各レコードの処理
             for i, record in enumerate(all_records):
                 record_lines = []
-                # レコードの各フィールドを処理
                 for field_name, field_data in record.items():
-                    # フィールドの値を取得
                     field_value = get_field_value(record, field_name)
-                    # 空の値や"不明"の場合はスキップ
                     if field_value and field_value != "不明":
                         record_lines.append(f"{field_name}: {field_value}")
-                
-                # 空でない場合のみ追加
+
                 if record_lines:
-                    # 最初のレコード以外は区切り線を追加
                     if i > 0:
-                        lines.append("---")  # レコード間の区切り
+                        lines.append("---")
                     lines.extend(record_lines)
 
             # 結果をテキスト形式に変換
+            yield self.create_variable_message("records", all_records)
             result_str = "\n".join(lines)
             yield self.create_text_message(result_str)
 
@@ -222,11 +223,25 @@ class KintoneTool(Tool):
             error_message = f"kintone API 呼び出し中に予期しないエラーが発生しました: {str(e)}"
             yield self.create_text_message(error_message)
 
+    def _resolve_timeout(self, value: Any, default: float) -> float:
+        """
+        タイムアウト秒数のパラメータを正規化し検証する。
+        """
+        if value is None:
+            return default
+        try:
+            timeout = float(value)
+        except (TypeError, ValueError):
+            raise ValueError
+        if timeout <= 0:
+            raise ValueError
+        return timeout
+
 
 def get_field_value(record: Dict[str, Any], field_name: str) -> str:
     """
     kintone レコードから指定されたフィールドの値を取り出して返す関数。
-    
+
     この関数は、kintoneの複雑なデータ構造を処理し、フィールドの値を取得します。
     入れ子になったデータ構造を再帰的に処理し、不要な情報（id, type）を除外します。
     フィールドが存在しない、または値が空の場合は "不明" を返します。

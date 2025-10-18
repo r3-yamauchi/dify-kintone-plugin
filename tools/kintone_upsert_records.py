@@ -40,18 +40,25 @@ class KintoneUpsertRecordsTool(Tool):
         except json.JSONDecodeError:
             yield self.create_text_message("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
             return
-            
+
         # レコードデータの基本的な構造を検証
         validation_errors = self._validate_records_structure(records_json)
         if validation_errors:
             error_message = "レコードデータの構造が不正です:\n" + "\n".join(validation_errors)
             yield self.create_text_message(error_message)
             return
-            
+
+        try:
+            timeout_seconds = self._resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
+        except ValueError:
+            yield self.create_text_message("request_timeout には正の数値を指定してください。")
+            return
+
         # APIリクエスト用のヘッダー設定
         headers = {
             "X-Cybozu-API-Token": kintone_api_token,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-HTTP-Method-Override": "PUT"
         }
 
         # kintone のレコード一括更新/追加 API のエンドポイント
@@ -67,11 +74,11 @@ class KintoneUpsertRecordsTool(Tool):
 
             # APIリクエストの実行
             try:
-                response = requests.put(
+                response = requests.post(
                     url,
                     headers=headers,
                     json=request_body,
-                    timeout=10  # タイムアウトを10秒に設定
+                    timeout=timeout_seconds
                 )
                 # HTTPエラーがあれば例外を発生
                 response.raise_for_status()
@@ -126,9 +133,13 @@ class KintoneUpsertRecordsTool(Tool):
                     "add": inserted_count,
                     "updated": updated_count,
                 }
+                yield self.create_variable_message("upsert_result", result_payload)
+                yield self.create_variable_message("response", data)
                 payload_text = json.dumps(result_payload, ensure_ascii=False)
                 yield self.create_text_message(payload_text)
             else:
+                yield self.create_variable_message("upsert_result", {"add": 0, "updated": 0})
+                yield self.create_variable_message("response", data)
                 yield self.create_text_message("レコードの更新/追加処理は完了しましたが、処理されたレコードはありませんでした。")
 
         except Exception as e:
@@ -218,3 +229,16 @@ class KintoneUpsertRecordsTool(Tool):
                     errors.append(f"レコード #{i+1} のフィールド '{field_code}' に 'value' キーがありません")
                 
         return errors
+
+    def _resolve_timeout(self, value: Any, default: float) -> float:
+        """タイムアウト秒数のパラメータを正の数値に正規化する。"""
+
+        if value is None:
+            return default
+        try:
+            timeout = float(value)
+        except (TypeError, ValueError):
+            raise ValueError
+        if timeout <= 0:
+            raise ValueError
+        return timeout

@@ -22,10 +22,6 @@ class KintoneGetFieldsTool(Tool):
     """
 
     _BASIC_EXCLUDE_TYPES = {"GROUP", "RECORD_NUMBER", "REFERENCE_TABLE"}
-    _DETAIL_LEVEL_BASIC = "basic"
-    _DETAIL_LEVEL_FULL = "full"
-    _DETAIL_LEVELS = {_DETAIL_LEVEL_BASIC, _DETAIL_LEVEL_FULL}
-
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:
         kintone_domain = tool_parameters.get("kintone_domain")
         if not kintone_domain:
@@ -48,10 +44,10 @@ class KintoneGetFieldsTool(Tool):
             yield self.create_text_message("kintone APIトークンが見つかりません。kintone_api_tokenパラメータを確認してください。")
             return
 
-        detail_level = tool_parameters.get("detail_level", self._DETAIL_LEVEL_BASIC)
-        if detail_level not in self._DETAIL_LEVELS:
-            valid_levels = ", ".join(sorted(self._DETAIL_LEVELS))
-            yield self.create_text_message(f"detail_level は {valid_levels} のいずれかを指定してください。")
+        try:
+            include_full = self._normalize_detail_flag(tool_parameters.get("detail_level", False))
+        except ValueError:
+            yield self.create_text_message("detail_level には真偽値（true/false）を指定してください。")
             return
 
         headers = {
@@ -104,12 +100,13 @@ class KintoneGetFieldsTool(Tool):
             yield self.create_text_message("フィールド定義が見つかりませんでした。アプリ設定を確認してください。")
             return
 
-        if detail_level == self._DETAIL_LEVEL_BASIC:
-            body = self._build_basic_view(properties)
-        else:
+        if include_full:
             body = properties
+        else:
+            body = self._build_basic_view(properties)
 
         payload = json.dumps(body, ensure_ascii=False, indent=2)
+        yield self.create_variable_message("fields", body)
         yield self.create_text_message(payload)
 
     def _build_basic_view(self, properties: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
@@ -196,3 +193,22 @@ class KintoneGetFieldsTool(Tool):
                 nested_info["options"] = nested_config["options"]
             nested_summary[nested_code] = nested_info
         return nested_summary
+
+    def _normalize_detail_flag(self, flag: Any) -> bool:
+        """
+        detail_levelフラグを真偽値へ正規化する。
+        """
+
+        if isinstance(flag, bool):
+            return flag
+        if flag is None:
+            return False
+        if isinstance(flag, str):
+            normalized = flag.strip().lower()
+            if normalized in {"true", "1", "yes", "y"}:
+                return True
+            if normalized in {"false", "0", "no", "n", ""}:
+                return False
+        if isinstance(flag, (int, float)):
+            return bool(flag)
+        raise ValueError("invalid flag")

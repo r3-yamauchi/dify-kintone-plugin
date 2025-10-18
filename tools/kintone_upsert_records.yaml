@@ -61,6 +61,18 @@ parameters:
       ja_JP: "複数レコードのJSONフォーマットデータ。更新の場合は'updateKey'フィールドを含めてください。形式: {\"records\": [{\"updateKey\": {\"field\": \"フィールドコード\", \"value\": \"値\"}, \"record\": {\"フィールドコード1\": {\"value\": \"値1\"}}}, ...]}"
     llm_description: "JSON format data for multiple records to update or insert in kintone. For updates, include 'updateKey' field."
     form: llm
+  - name: request_timeout
+    type: number
+    required: false
+    default: 30
+    label:
+      en_US: "Request Timeout (seconds)"
+      ja_JP: "リクエストタイムアウト（秒）"
+    human_description:
+      en_US: "Timeout in seconds for the kintone API request. Default is 10 seconds."
+      ja_JP: "kintone APIリクエストのタイムアウト秒数。既定値は10秒です。"
+    llm_description: "Timeout in seconds for each API call; defaults to 10."
+    form: llm
 extra:
   python:
     source: tools/kintone_upsert_records.py

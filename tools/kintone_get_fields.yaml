@@ -48,26 +48,17 @@ parameters:
     llm_description: API token with view permissions for the kintone app
     form: llm
   - name: detail_level
-    type: select
+    type: boolean
     required: false
+    default: false
     label:
-      en_US: "Detail Level"
-      ja_JP: "出力モード"
+      en_US: "Include Full Details"
+      ja_JP: "全情報を含める"
     human_description:
-      en_US: "Choose 'basic' for key properties (code, type, required, unique, options) or 'full' for the entire field definition. Default is basic."
-      ja_JP: "主要情報のみ（basic）か全情報（full）かを選択します。省略時は basic。"
-    llm_description: "'basic' or 'full' to control how much information to return."
+      en_US: "Return all information when true; return only the essentials needed to build queries when false."
+      ja_JP: "true を指定するとフィールドに関する全ての情報を返します。false の場合はクエリを構築するために必要な最低限の情報のみを返します。"
+    llm_description: "Boolean; true returns the full field definition, false keeps the basic summary."
     form: llm
-    options:
-      - value: basic
-        label:
-          en_US: "Basic"
-          ja_JP: "basic"
-      - value: full
-        label:
-          en_US: "Full"
-          ja_JP: "full"
-    default: basic
 extra:
   python:
     source: tools/kintone_get_fields.py

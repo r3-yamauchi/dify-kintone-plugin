@@ -1,0 +1,18 @@
+identity:
+  name: kintone_record_data_docs
+  author: r3-yamauchi
+  label:
+    en_US: kintone Record Data Docs
+    zh_Hans: kintone 记录数据规范
+    ja_JP: kintone record_data仕様
+description:
+  human:
+    en_US: Return the record_data JSON grammar for kintone_add_record
+    ja_JP: kintone_add_record向けrecord_dataのJSON構文リファレンスを返します
+    zh_Hans: 返回 kintone_add_record 的 record_data JSON 结构说明
+  llm: Provide the record_data JSON specification used by kintone_add_record
+parameters: []
+extra:
+  python:
+    source: tools/kintone_record_data_docs.py
+    class: KintoneRecordDataDocTool
