@@ -17,6 +17,7 @@ tools:
   - tools/kintone_add_record.yaml
   - tools/kintone_upsert_records.yaml
   - tools/kintone_download_file.yaml
+  - tools/kintone_upload_file.yaml
   - tools/kintone_get_fields.yaml
   - tools/kintone_validate_record_data.yaml
   - tools/kintone_query_docs.yaml

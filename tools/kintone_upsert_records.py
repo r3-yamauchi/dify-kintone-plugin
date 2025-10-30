@@ -1,3 +1,4 @@
+import ast
 import json
 import re
 from collections.abc import Generator
@@ -34,11 +35,11 @@ class KintoneUpsertRecordsTool(Tool):
             yield self.create_text_message("レコードデータが見つかりません。records_dataパラメータを確認してください。")
             return
 
-        # レコードデータをJSONとして解析
+        # レコードデータを正規化
         try:
-            records_json = json.loads(records_data)
-        except json.JSONDecodeError:
-            yield self.create_text_message("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+            records_json = self._parse_records_data(records_data)
+        except ValueError as error:
+            yield self.create_text_message(str(error))
             return
 
         # レコードデータの基本的な構造を検証
@@ -121,25 +122,49 @@ class KintoneUpsertRecordsTool(Tool):
                 return
 
             # 処理結果の取得
-            records = data.get("records", [])
-            
-            # 成功メッセージを返す
-            record_count = len(records)
-            if record_count > 0:
-                inserted_count = len(data.get("ids", []))
-                updated_count = len(data.get("revisions", []))
+            inserted_count = 0
+            updated_count = 0
+            operations_counted = False
 
-                result_payload = {
-                    "add": inserted_count,
-                    "updated": updated_count,
-                }
-                yield self.create_variable_message("upsert_result", result_payload)
-                yield self.create_variable_message("response", data)
+            records_info = data.get("records")
+            if isinstance(records_info, list):
+                for item in records_info:
+                    if not isinstance(item, dict):
+                        continue
+                    op = item.get("operation")
+                    if not isinstance(op, str):
+                        continue
+                    normalized = op.strip().upper()
+                    if normalized == "INSERT":
+                        inserted_count += 1
+                        operations_counted = True
+                    elif normalized == "UPDATE":
+                        updated_count += 1
+                        operations_counted = True
+
+            if not operations_counted:
+                ids = data.get("ids")
+                revisions = data.get("revisions")
+                if isinstance(ids, list):
+                    inserted_count = len(ids)
+                if isinstance(revisions, list):
+                    updated_count = len(revisions)
+                if inserted_count == 0 and updated_count == 0 and isinstance(records_info, list):
+                    updated_count = len(records_info)
+
+            total_processed = inserted_count + updated_count
+
+            result_payload = {
+                "add": inserted_count,
+                "updated": updated_count,
+            }
+            yield self.create_variable_message("upsert_result", result_payload)
+            yield self.create_variable_message("response", data)
+
+            if total_processed > 0:
                 payload_text = json.dumps(result_payload, ensure_ascii=False)
                 yield self.create_text_message(payload_text)
             else:
-                yield self.create_variable_message("upsert_result", {"add": 0, "updated": 0})
-                yield self.create_variable_message("response", data)
                 yield self.create_text_message("レコードの更新/追加処理は完了しましたが、処理されたレコードはありませんでした。")
 
         except Exception as e:
@@ -147,6 +172,56 @@ class KintoneUpsertRecordsTool(Tool):
             error_message = f"kintone API 呼び出し中に予期しないエラーが発生しました: {str(e)}"
             yield self.create_text_message(error_message)
             
+    def _parse_records_data(self, payload: Any) -> Dict[str, Any]:
+        """
+        records_dataパラメータを辞書形式へ正規化する。
+
+        - JSON文字列
+        - Pythonリテラル表現（単引用符等）
+        - 直接辞書での指定
+        - {'records_data': {...}} のラッパー
+        を受け付ける。
+        """
+
+        if isinstance(payload, dict):
+            data = payload
+        elif isinstance(payload, list):
+            for item in payload:
+                if item is payload:
+                    continue
+                try:
+                    return self._parse_records_data(item)
+                except ValueError:
+                    continue
+            raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+        elif isinstance(payload, str):
+            text = payload.strip()
+            if not text:
+                raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+            try:
+                data = json.loads(text)
+            except json.JSONDecodeError:
+                try:
+                    data = ast.literal_eval(text)
+                except (ValueError, SyntaxError):
+                    raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。") from None
+                if isinstance(data, list):
+                    return self._parse_records_data(data)
+            else:
+                if isinstance(data, list):
+                    return self._parse_records_data(data)
+        else:
+            raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+
+        if not isinstance(data, dict):
+            raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+
+        # {'records_data': {...}} 形式のラッパーを許容
+        if "records" not in data and isinstance(data.get("records_data"), dict):
+            data = data["records_data"]
+
+        return data
+
     def _validate_records_structure(self, records_data: Dict[str, Any]) -> List[str]:
         """
         複数レコードデータの基本的な構造を検証する関数

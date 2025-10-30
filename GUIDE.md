@@ -1,117 +1,137 @@
-## User Guide of how to develop a Dify Plugin
+# Dify Plugin Development Guide
 
-Hi there, looks like you have already created a Plugin, now let's get you started with the development!
+Welcome to Dify plugin development! This guide will help you get started quickly.
 
-### Choose a Plugin type you want to develop
+## Plugin Types
 
-Before start, you need some basic knowledge about the Plugin types, Plugin supports to extend the following abilities in Dify:
-- **Tool**: Tool Providers like Google Search, Stable Diffusion, etc. it can be used to perform a specific task.
-- **Model**: Model Providers like OpenAI, Anthropic, etc. you can use their models to enhance the AI capabilities.
-- **Endpoint**: Like Service API in Dify and Ingress in Kubernetes, you can extend a http service as an endpoint and control its logics using your own code.
+Dify plugins extend three main capabilities:
 
-Based on the ability you want to extend, we have divided the Plugin into three types: **Tool**, **Model**, and **Extension**.
+| Type | Description | Example |
+|------|-------------|---------|
+| **Tool** | Perform specific tasks | Google Search, Stable Diffusion |
+| **Model** | AI model integrations | OpenAI, Anthropic |
+| **Endpoint** | HTTP services | Custom APIs, integrations |
 
-- **Tool**: It's a tool provider, but not only limited to tools, you can implement an endpoint there, for example, you need both `Sending Message` and `Receiving Message` if you are building a Discord Bot, **Tool** and **Endpoint** are both required.
-- **Model**: Just a model provider, extending others is not allowed.
-- **Extension**: Other times, you may only need a simple http service to extend the functionalities, **Extension** is the right choice for you.
+You can create:
+- **Tool**: Tool provider with optional endpoints (e.g., Discord bot)
+- **Model**: Model provider only
+- **Extension**: Simple HTTP service
 
-I believe you have chosen the right type for your Plugin while creating it, if not, you can change it later by modifying the `manifest.yaml` file.
+## Setup
 
-### Manifest
+### Requirements
+- Python 3.11+
+- Dependencies: `pip install -r requirements.txt`
 
-Now you can edit the `manifest.yaml` file to describe your Plugin, here is the basic structure of it:
+## Development Process
 
-- version(version, required)：Plugin's version
-- type(type, required)：Plugin's type, currently only supports `plugin`, future support `bundle`
-- author(string, required)：Author, it's the organization name in Marketplace and should also equals to the owner of the repository
-- label(label, required)：Multi-language name
-- created_at(RFC3339, required)：Creation time, Marketplace requires that the creation time must be less than the current time
-- icon(asset, required)：Icon path
-- resource (object)：Resources to be applied
-  - memory (int64)：Maximum memory usage, mainly related to resource application on SaaS for serverless, unit bytes
-  - permission(object)：Permission application
-    - tool(object)：Reverse call tool permission
-      - enabled (bool)
-    - model(object)：Reverse call model permission
-      - enabled(bool)
-      - llm(bool)
-      - text_embedding(bool)
-      - rerank(bool)
-      - tts(bool)
-      - speech2text(bool)
-      - moderation(bool)
-    - node(object)：Reverse call node permission
-      - enabled(bool) 
-    - endpoint(object)：Allow to register endpoint permission
-      - enabled(bool)
-    - app(object)：Reverse call app permission
-      - enabled(bool)
-    - storage(object)：Apply for persistent storage permission
-      - enabled(bool)
-      - size(int64)：Maximum allowed persistent memory, unit bytes
-- plugins(object, required)：Plugin extension specific ability yaml file list, absolute path in the plugin package, if you need to extend the model, you need to define a file like openai.yaml, and fill in the path here, and the file on the path must exist, otherwise the packaging will fail.
-  - Format
-    - tools(list[string]): Extended tool suppliers, as for the detailed format, please refer to [Tool Guide](https://docs.dify.ai/docs/plugins/standard/tool_provider)
-    - models(list[string])：Extended model suppliers, as for the detailed format, please refer to [Model Guide](https://docs.dify.ai/docs/plugins/standard/model_provider)
-    - endpoints(list[string])：Extended Endpoints suppliers, as for the detailed format, please refer to [Endpoint Guide](https://docs.dify.ai/docs/plugins/standard/endpoint_group)
-  - Restrictions
-    - Not allowed to extend both tools and models
-    - Not allowed to have no extension
-    - Not allowed to extend both models and endpoints
-    - Currently only supports up to one supplier of each type of extension
-- meta(object)
-  - version(version, required)：manifest format version, initial version 0.0.1
-  - arch(list[string], required)：Supported architectures, currently only supports amd64 arm64
-  - runner(object, required)：Runtime configuration
-    - language(string)：Currently only supports python
-    - version(string)：Language version, currently only supports 3.12
-    - entrypoint(string)：Program entry, in python it should be main
+<details>
+<summary><b>1. Manifest Structure</b></summary>
 
-### Install Dependencies
+Edit `manifest.yaml` to describe your plugin:
 
-- First of all, you need a Python 3.10+ environment, as our SDK requires that.
-- Then, install the dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-- If you want to add more dependencies, you can add them to the `requirements.txt` file, once you have set the runner to python in the `manifest.yaml` file, `requirements.txt` will be automatically generated and used for packaging and deployment.
+```yaml
+version: 0.1.0                  # Required: Plugin version
+type: plugin                    # Required: plugin or bundle
+author: YourOrganization        # Required: Organization name
+label:                          # Required: Multi-language names
+  en_US: Plugin Name
+  zh_Hans: 插件名称
+created_at: 2023-01-01T00:00:00Z # Required: Creation time (RFC3339)
+icon: assets/icon.png           # Required: Icon path
 
-### Implement the Plugin
+# Resources and permissions
+resource:
+  memory: 268435456            # Max memory (bytes)
+  permission:
+    tool:
+      enabled: true            # Tool permission
+    model:
+      enabled: true            # Model permission
+      llm: true
+      text_embedding: false
+      # Other model types...
+    # Other permissions...
 
-Now you can start to implement your Plugin, by following these examples, you can quickly understand how to implement your own Plugin:
+# Extensions definition
+plugins:
+  tools:
+    - tools/my_tool.yaml       # Tool definition files
+  models:
+    - models/my_model.yaml     # Model definition files
+  endpoints:
+    - endpoints/my_api.yaml    # Endpoint definition files
 
-- [OpenAI](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/openai): best practice for model provider
-- [Google Search](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/google): a simple example for tool provider
-- [Neko](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/neko): a funny example for endpoint group
-
-### Test and Debug the Plugin
-
-You may already noticed that a `.env.example` file in the root directory of your Plugin, just copy it to `.env` and fill in the corresponding values, there are some environment variables you need to set if you want to debug your Plugin locally.
-
-- `INSTALL_METHOD`: Set this to `remote`, your plugin will connect to a Dify instance through the network.
-- `REMOTE_INSTALL_HOST`: The host of your Dify instance, you can use our SaaS instance `https://debug.dify.ai`, or self-hosted Dify instance.
-- `REMOTE_INSTALL_PORT`: The port of your Dify instance, default is 5003
-- `REMOTE_INSTALL_KEY`: You should get your debugging key from the Dify instance you used, at the right top of the plugin management page, you can see a button with a `debug` icon, click it and you will get the key.
-
-Run the following command to start your Plugin:
-
-```bash
-python -m main
+# Runtime metadata
+meta:
+  version: 0.0.1               # Manifest format version
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
 ```
 
-Refresh the page of your Dify instance, you should be able to see your Plugin in the list now, but it will be marked as `debugging`, you can use it normally, but not recommended for production.
+**Restrictions:**
+- Cannot extend both tools and models
+- Must have at least one extension
+- Cannot extend both models and endpoints
+- Limited to one supplier per extension type
+</details>
 
-### Package the Plugin
+<details>
+<summary><b>2. Implementation Examples</b></summary>
 
-After all, just package your Plugin by running the following command:
+Study these examples to understand plugin implementation:
 
+- [OpenAI](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/openai) - Model provider
+- [Google Search](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/google) - Tool provider
+- [Neko](https://github.com/langgenius/dify-plugin-sdks/tree/main/python/examples/neko) - Endpoint group
+</details>
+
+<details>
+<summary><b>3. Testing & Debugging</b></summary>
+
+1. Copy `.env.example` to `.env` and configure:
+   ```
+   INSTALL_METHOD=remote
+   REMOTE_INSTALL_URL=debug.dify.ai:5003
+   REMOTE_INSTALL_KEY=your-debug-key
+   ```
+
+2. Run your plugin: 
+   ```bash
+   python -m main
+   ```
+
+3. Refresh your Dify instance to see the plugin (marked as "debugging")
+</details>
+
+<details>
+<summary><b>4. Publishing</b></summary>
+
+#### Manual Packaging
 ```bash
-dify-plugin plugin package ./ROOT_DIRECTORY_OF_YOUR_PLUGIN
+dify-plugin plugin package ./YOUR_PLUGIN_DIR
 ```
 
-you will get a `plugin.difypkg` file, that's all, you can submit it to the Marketplace now, look forward to your Plugin being listed!
+#### Automated GitHub Workflow
 
+Configure GitHub Actions to automate PR creation:
 
-## User Privacy Policy
+1. Create a Personal Access Token for your forked repository
+2. Add it as `PLUGIN_ACTION` secret in your source repo
+3. Create `.github/workflows/plugin-publish.yml`
 
-Please fill in the privacy policy of the plugin if you want to make it published on the Marketplace, refer to [PRIVACY.md](PRIVACY.md) for more details.
+When you create a release, the action will:
+- Package your plugin
+- Create a PR to your fork
+
+[Detailed workflow documentation](https://docs.dify.ai/plugins/publish-plugins/plugin-auto-publish-pr)
+</details>
+
+## Privacy Policy
+
+If publishing to the Marketplace, provide a privacy policy in [PRIVACY.md](PRIVACY.md).

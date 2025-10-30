@@ -1,0 +1,115 @@
+identity:
+  name: kintone_upload_file
+  author: r3-yamauchi
+  label:
+    en_US: kintone Upload File
+    zh_Hans: kintone 上传文件
+    pt_BR: kintone Enviar Arquivo
+    ja_JP: kintone ファイルアップロード
+description:
+  human:
+    en_US: Upload a file to kintone and receive its file key for later use
+    zh_Hans: 将文件上传到kintone并获取文件密钥以便后续使用
+    pt_BR: Envie um arquivo para o kintone e obtenha a fileKey para uso posterior
+    ja_JP: |-
+      kintoneへファイルをアップロードし、後続処理で利用できるfileKeyを取得します
+
+      【利用手順】
+      1. Difyでファイルを添付してこのツールを実行します
+      2. 応答で返るfileKeyをkintone_add_record等の添付ファイルフィールドに指定します
+  llm: Upload a file to kintone and return the resulting fileKey identifier
+parameters:
+  - name: kintone_domain
+    type: string
+    required: true
+    label:
+      en_US: kintone Domain
+      zh_Hans: kintone 域名
+      pt_BR: Domínio kintone
+      ja_JP: kintone ドメイン
+    human_description:
+      en_US: "Your kintone domain (e.g., your-subdomain.cybozu.com)"
+      zh_Hans: "您的kintone域名（例如 your-subdomain.cybozu.com）"
+      pt_BR: "O domínio do seu kintone (ex. your-subdomain.cybozu.com)"
+      ja_JP: "お使いのkintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）"
+    llm_description: kintone domain to upload the file to
+    form: llm
+  - name: kintone_api_token
+    type: secret-input
+    required: true
+    label:
+      en_US: kintone API Token
+      zh_Hans: kintone API 令牌
+      pt_BR: Token de API kintone
+      ja_JP: kintone APIトークン
+    human_description:
+      en_US: "API token generated from your kintone app with file upload permissions"
+      zh_Hans: "从您的kintone应用程序生成的具有文件上传权限的API令牌"
+      pt_BR: "Token de API gerado do seu aplicativo kintone com permissão de upload"
+      ja_JP: "kintone アプリで発行したファイルアップロード権限を持つAPIトークン"
+    llm_description: API token with upload permission for the target kintone app
+    form: llm
+  - name: upload_file
+    type: files
+    required: true
+    label:
+      en_US: Files To Upload
+      zh_Hans: 要上传的文件集合
+      pt_BR: Arquivos para Enviar
+      ja_JP: アップロードするファイル群
+    human_description:
+      en_US: "Select one or more files to upload. Dify automatically includes the binary data for each file."
+      zh_Hans: "选择一个或多个要上传的文件。Dify 会自动包含每个文件的二进制数据。"
+      pt_BR: "Selecione um ou mais arquivos que deseja enviar. O Dify inclui automaticamente os dados binários de cada arquivo."
+      ja_JP: "アップロードするファイルを1件以上指定してください。Difyが各ファイルの内容を自動で渡します。"
+    llm_description: One or more files provided by the user that should be uploaded to kintone
+    form: llm
+  - name: file_names
+    type: string
+    required: false
+    label:
+      en_US: Custom File Names
+      zh_Hans: 自定义文件名
+      pt_BR: Nomes de Arquivo Personalizados
+      ja_JP: カスタムファイル名
+    human_description:
+      en_US: "Optional. Provide a single filename for one file, or a JSON array (e.g. [\"a.pdf\", \"b.pdf\"]) when uploading multiple files."
+      zh_Hans: "可选。上传一个文件时填写单个文件名；上传多个文件时，请提供 JSON 数组（例如 [\"a.pdf\", \"b.pdf\"]）。"
+      pt_BR: "Opcional. Informe um único nome para um arquivo ou um array JSON (ex.: [\"a.pdf\", \"b.pdf\"]) ao enviar vários arquivos."
+      ja_JP: "任意。単一ファイルの場合はファイル名を、複数ファイルの場合は JSON 配列（例: [\"a.pdf\", \"b.pdf\"]）で指定します。"
+    llm_description: Optional custom filename(s). Use a single string for one file or a JSON array for multiple files.
+    form: llm
+  - name: records_mapping
+    type: string
+    required: false
+    label:
+      en_US: Records Mapping (for upsert)
+      zh_Hans: 记录映射（用于 upsert）
+      pt_BR: Mapeamento de Registros (para upsert)
+      ja_JP: レコードマッピング（upsert 用）
+    human_description:
+      en_US: "Optional. Provide a JSON object to auto-generate the 'records' payload for kintone_upsert_records."
+      zh_Hans: "可选。提供 JSON 对象以自动生成 kintone_upsert_records 的 'records' 负载。"
+      pt_BR: "Opcional. Informe um objeto JSON para gerar automaticamente o payload 'records' do kintone_upsert_records."
+      ja_JP: "任意。JSONオブジェクトを指定すると、kintone_upsert_records向けの'records'ペイロードを自動生成します。"
+    llm_description: Optional JSON configuration to create the records payload for kintone_upsert_records.
+    form: llm
+  - name: request_timeout
+    type: number
+    required: false
+    label:
+      en_US: Request Timeout (seconds)
+      zh_Hans: 请求超时（秒）
+      pt_BR: Tempo limite da requisição (segundos)
+      ja_JP: リクエストタイムアウト（秒）
+    human_description:
+      en_US: "Optional. Adjust the API timeout in seconds. Default is 30 seconds."
+      zh_Hans: "可选。以秒为单位调整 API 超时时间。默认 30 秒。"
+      pt_BR: "Opcional. Ajuste o tempo limite da API em segundos. Padrão 30 segundos."
+      ja_JP: "任意。APIのタイムアウトを秒単位で指定します。既定値は30秒です。"
+    llm_description: Optional request timeout in seconds (default 30)
+    form: llm
+extra:
+  python:
+    source: tools/kintone_upload_file.py
+    class: KintoneUploadFileTool
