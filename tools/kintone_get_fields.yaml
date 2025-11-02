@@ -16,14 +16,17 @@ description:
 parameters:
   - name: kintone_domain
     type: string
-    required: true
+    required: false
     label:
       en_US: "kintone Domain"
       ja_JP: "cybozu.com ドメイン"
     human_description:
-      en_US: "Your kintone domain (e.g., your-subdomain.cybozu.com)"
-      ja_JP: "お使いのkintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）"
+      en_US: "Portion of your kintone URL after https:// (e.g., your-subdomain.cybozu.com). If left blank, the value from provider settings is used."
+      ja_JP: "kintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）。未入力の場合はプロバイダー設定で入力した値が使用されます。"
     llm_description: kintone domain where the app is hosted
+    placeholder:
+      en_US: "your-subdomain.cybozu.com"
+      ja_JP: "your-subdomain.cybozu.com"
     form: llm
   - name: kintone_app_id
     type: number
@@ -38,13 +41,13 @@ parameters:
     form: llm
   - name: kintone_api_token
     type: secret-input
-    required: true
+    required: false
     label:
       en_US: "kintone API Token"
       ja_JP: "対象の kintoneアプリの APIトークン"
     human_description:
-      en_US: "API token generated from your kintone app with view permissions"
-      ja_JP: "kintone アプリで発行した閲覧権限を持つAPIトークン"
+      en_US: "API token issued from the target kintone app with record view permission. If left blank, the value from provider settings is used."
+      ja_JP: "対象のkintoneアプリで発行した、レコード閲覧権限を付与したAPIトークン。未入力の場合はプロバイダー設定で入力した値が使用されます。"
     llm_description: API token with view permissions for the kintone app
     form: llm
   - name: detail_level

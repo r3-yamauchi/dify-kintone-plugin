@@ -1,7 +1,7 @@
 # dify-kintone-plugin
 
 **Author:** r3-yamauchi
-**Version:** 0.0.8
+**Version:** 0.1.0
 **Type:** tool
 
 ## Description
@@ -29,6 +29,11 @@
 - 対象のkintoneアプリを閲覧する権限を持つAPIトークン
 
 APIトークン以外の認証方式に対応していません。 Basic認証や SAML認証にも対応していません。
+
+## 設定
+
+1. プラグインのプロバイダー設定画面で `kintone_domain` と `kintone_api_token` の値を入力できます。APIトークンはカンマ区切り（例: `token1,token2`）で 9個まで指定でき、10個以上を指定すると検証エラーになります。
+2. 各ツールでも APIトークンを指定できます。各ツールで指定しない場合はプロバイダー設定値が使われ、指定するとその値が使用されます。
 
 ## Usage Examples
 
@@ -67,6 +72,54 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 ```
 
 任意パラメータ: `request_timeout`（秒）を指定するとAPIタイムアウトを調整できます（既定値30秒）。
+
+`output_mode` パラメータを指定すると、出力形式を選べます。
+
+| 値 | 挙動 |
+| --- | --- |
+| `text_only` | テキストのみ |
+| `json_stream` | JSON をページ単位で逐次返却（テキストは省略） |
+| `both` (既定) | テキストと JSON をまとめて返却 |
+
+レスポンス例は次の通りです。
+
+```
+Text:
+取得したレコード件数: 12
+顧客名: ACME株式会社
+担当者: 山田
+---
+顧客名: ベータ商事
+担当者: 佐藤
+...
+
+JSON:
+{
+  "summary": {
+    "total_records": 12,
+    "requests_made": 3,
+    "request_limit": 500,
+    "initial_offset": 0,
+    "final_offset": 1000,
+    "used_pagination": true,
+    "fields": ["顧客名", "担当者"],
+    "effective_query": "Status = \"完了\" order by 更新日時 desc",
+    "user_defined_limit": null,
+    "user_defined_offset": null
+  },
+  "records": [
+    {
+      "顧客名": {"type": "SINGLE_LINE_TEXT", "value": "ACME株式会社"},
+      "担当者": {"type": "SINGLE_LINE_TEXT", "value": "山田"}
+    },
+    {
+      "顧客名": {"type": "SINGLE_LINE_TEXT", "value": "ベータ商事"},
+      "担当者": {"type": "SINGLE_LINE_TEXT", "value": "佐藤"}
+    },
+    ...
+  ]
+}
+```
 
 ### 2. kintone Get Fields
 

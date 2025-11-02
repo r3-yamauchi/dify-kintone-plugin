@@ -10,6 +10,7 @@ import base64
 import binascii
 import copy
 import json
+import math
 import re
 from collections.abc import Generator
 from typing import Any, Dict, List, Tuple
@@ -20,22 +21,43 @@ from requests.exceptions import HTTPError, RequestException, Timeout
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
+from .common import (
+    build_headers,
+    is_blank,
+    log_parameters,
+    log_response,
+    normalize_api_tokens,
+    normalize_domain,
+    resolve_timeout,
+    resolve_tool_parameter,
+)
+
 
 class KintoneUploadFileTool(Tool):
     """kintoneのファイルAPIにアップロードしfileKeyを返却するツール。"""
 
-    # kintone REST API の1ファイル上限 (公式ドキュメント基準: 1GB)
-    MAX_UPLOAD_BYTES = 1024 * 1024 * 1024
+    # kintone REST API の1ファイル上限 (公式ドキュメント基準: 1GB)。
+    # Difyツールとしては32MB程度が実用的な上限なので、双方の条件に収まる値を採用する。
+    MAX_UPLOAD_BYTES = min(1024 * 1024 * 1024, 32 * 1024 * 1024)
 
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:
-        kintone_domain = tool_parameters.get("kintone_domain")
-        if not kintone_domain:
+        raw_domain = resolve_tool_parameter(self, tool_parameters, "kintone_domain")
+        if is_blank(raw_domain):
             yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
             return
 
-        kintone_api_token = tool_parameters.get("kintone_api_token")
-        if not kintone_api_token:
-            yield self.create_text_message("kintone APIトークンが見つかりません。kintone_api_tokenパラメータを確認してください。")
+        try:
+            kintone_domain = normalize_domain(raw_domain)
+        except ValueError:
+            yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
+            return
+
+        try:
+            kintone_api_token = normalize_api_tokens(
+                resolve_tool_parameter(self, tool_parameters, "kintone_api_token")
+            )
+        except ValueError as error:
+            yield self.create_text_message(str(error))
             return
 
         file_parameter = tool_parameters.get("upload_file")
@@ -63,14 +85,24 @@ class KintoneUploadFileTool(Tool):
             return
 
         try:
-            timeout_seconds = self._resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
+            timeout_seconds = resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
         except ValueError:
             yield self.create_text_message("request_timeout には正の数値を指定してください。")
             return
         url = f"https://{kintone_domain}/k/v1/file.json"
-        headers = {"X-Cybozu-API-Token": kintone_api_token}
+        headers = build_headers(kintone_api_token, content_type=None)
+
+        yield log_parameters(
+            self,
+            {
+                "kintone_domain": kintone_domain,
+                "file_count": len(files_to_upload),
+                "has_records_mapping": records_mapping_param is not None,
+            },
+        )
 
         uploaded_files: List[Dict[str, Any]] = []
+        uploaded_details: List[Dict[str, Any]] = []
         file_names: List[str] = []
 
         try:
@@ -79,7 +111,10 @@ class KintoneUploadFileTool(Tool):
                     yield self.create_text_message(f"ファイル '{file_name}' の内容が空です。別のファイルを指定してください。")
                     return
                 if len(file_bytes) > self.MAX_UPLOAD_BYTES:
-                    yield self.create_text_message(f"ファイル '{file_name}' のサイズが大きすぎます。1GB以下のファイルを指定してください。")
+                    limit_mb = max(1, math.ceil(self.MAX_UPLOAD_BYTES / (1024 * 1024)))
+                    yield self.create_text_message(
+                        f"ファイル '{file_name}' のサイズが大きすぎます。{limit_mb}MB 以下のファイルを指定してください。"
+                    )
                     return
 
                 files = {
@@ -125,14 +160,34 @@ class KintoneUploadFileTool(Tool):
                     yield self.create_text_message("ファイルはアップロードされましたが、fileKeyを取得できませんでした。")
                     return
 
-                print(f"kintone_upload_file: '{file_name}' ({len(file_bytes)} bytes) をアップロードしました。")
+                yield self.create_log_message(
+                    label="Uploaded file",
+                    data={
+                        "file_name": file_name,
+                        "size": len(file_bytes),
+                        "mime_type": mime_type or "application/octet-stream",
+                        "status_code": response.status_code,
+                    },
+                )
 
                 uploaded_files.append({"fileKey": str(file_key)})
+                uploaded_details.append(
+                    {
+                        "fileKey": str(file_key),
+                        "file_name": file_name,
+                        "size": len(file_bytes),
+                        "mime_type": mime_type or "application/octet-stream",
+                        "status_code": response.status_code,
+                    }
+                )
                 file_names.append(file_name)
 
             yield self.create_variable_message("uploaded_files", uploaded_files)
 
-            json_payload: Dict[str, Any] = {"uploaded_files": uploaded_files}
+            json_payload: Dict[str, Any] = {
+                "uploaded_files": uploaded_files,
+                "details": uploaded_details,
+            }
 
             if records_mapping_param is not None:
                 try:
@@ -143,9 +198,28 @@ class KintoneUploadFileTool(Tool):
 
                 records_json = json.dumps(records_payload, ensure_ascii=False)
                 yield self.create_variable_message("records_data", records_json)
-                json_payload = {"records_data": records_payload}
+                json_payload = {
+                    "uploaded_files": uploaded_files,
+                    "records_data": records_payload,
+                    "details": uploaded_details,
+                }
+                yield self.create_log_message(
+                    label="Records mapping summary",
+                    data={
+                        "records_count": len(records_payload.get("records", [])),
+                    },
+                )
 
             yield self.create_json_message(json_payload)
+            yield log_response(
+                self,
+                "kintone upload summary",
+                {
+                    "file_count": len(uploaded_files),
+                    "details": uploaded_details,
+                    "has_records_payload": records_mapping_param is not None,
+                },
+            )
 
             if len(uploaded_files) == 1:
                 yield self.create_text_message(
@@ -317,19 +391,6 @@ class KintoneUploadFileTool(Tool):
                 return data
 
         return None
-
-    def _resolve_timeout(self, value: Any, default: float) -> float:
-        """タイムアウト秒数のパラメータを正の数値に正規化する。"""
-
-        if value is None:
-            return default
-        try:
-            timeout = float(value)
-        except (TypeError, ValueError):
-            raise ValueError from None
-        if timeout <= 0:
-            raise ValueError
-        return timeout
 
     def _download_file_payload(self, payload: Dict[str, Any]) -> bytes:
         """Difyのtool_fileなど、URL経由で渡されるファイルをダウンロードする。"""

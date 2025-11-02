@@ -5,13 +5,25 @@
 """
 import json
 from collections.abc import Generator
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import requests
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
+
+from .common import (
+    build_headers,
+    is_blank,
+    log_parameters,
+    log_response,
+    normalize_api_tokens,
+    normalize_app_id,
+    normalize_domain,
+    resolve_timeout,
+    resolve_tool_parameter,
+)
 
 
 class KintoneGetFieldsTool(Tool):
@@ -21,10 +33,20 @@ class KintoneGetFieldsTool(Tool):
     kintone のフォーム設定 API を呼び出し、出力モードに応じたフィールド情報を返す。
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._fields_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
+
     _BASIC_EXCLUDE_TYPES = {"GROUP", "RECORD_NUMBER", "REFERENCE_TABLE"}
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:
-        kintone_domain = tool_parameters.get("kintone_domain")
-        if not kintone_domain:
+        raw_domain = resolve_tool_parameter(self, tool_parameters, "kintone_domain")
+        if is_blank(raw_domain):
+            yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
+            return
+
+        try:
+            kintone_domain = normalize_domain(raw_domain)
+        except ValueError:
             yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
             return
 
@@ -34,14 +56,17 @@ class KintoneGetFieldsTool(Tool):
             return
 
         try:
-            normalized_app_id = self._normalize_app_id(kintone_app_id)
+            normalized_app_id = normalize_app_id(kintone_app_id)
         except ValueError:
             yield self.create_text_message(f"kintone アプリIDが無効です。整数値を指定してください（現在の入力: {kintone_app_id!r}）。")
             return
 
-        kintone_api_token = tool_parameters.get("kintone_api_token")
-        if not kintone_api_token:
-            yield self.create_text_message("kintone APIトークンが見つかりません。kintone_api_tokenパラメータを確認してください。")
+        try:
+            kintone_api_token = normalize_api_tokens(
+                resolve_tool_parameter(self, tool_parameters, "kintone_api_token")
+            )
+        except ValueError as error:
+            yield self.create_text_message(str(error))
             return
 
         try:
@@ -50,21 +75,45 @@ class KintoneGetFieldsTool(Tool):
             yield self.create_text_message("detail_level には真偽値（true/false）を指定してください。")
             return
 
-        headers = {
-            "X-Cybozu-API-Token": kintone_api_token,
-            "Content-Type": "application/json",
-            "X-HTTP-Method-Override": "GET",  # kintone APIが推奨するメソッドオーバーライドを利用
-        }
+        try:
+            timeout_seconds = resolve_timeout(tool_parameters.get("request_timeout"), 10.0)
+        except ValueError:
+            yield self.create_text_message("request_timeout には正の数値を指定してください。")
+            return
+
+        headers = build_headers(
+            kintone_api_token,
+            method_override="GET",
+        )
 
         url = f"https://{kintone_domain}/k/v1/app/form/fields.json"
         request_body = {"app": normalized_app_id}
+
+        cache_key = (f"{kintone_domain}:{normalized_app_id}", int(include_full))
+        cached = self._fields_cache.get(cache_key)
+        if cached is not None:
+            body = cached if include_full else self._build_basic_view(cached)
+            payload = json.dumps(body, ensure_ascii=False, indent=2)
+            yield self.create_variable_message("fields", body)
+            yield self.create_json_message(body)
+            yield self.create_text_message(payload)
+            return
+
+        yield log_parameters(
+            self,
+            {
+                "kintone_domain": kintone_domain,
+                "kintone_app_id": normalized_app_id,
+                "detail_level": include_full,
+            },
+        )
 
         try:
             response = requests.post(
                 url,
                 headers=headers,
                 json=request_body,
-                timeout=10,
+                timeout=timeout_seconds,
             )
             response.raise_for_status()
         except Timeout:
@@ -100,14 +149,19 @@ class KintoneGetFieldsTool(Tool):
             yield self.create_text_message("フィールド定義が見つかりませんでした。アプリ設定を確認してください。")
             return
 
-        if include_full:
-            body = properties
-        else:
-            body = self._build_basic_view(properties)
+        self._fields_cache[cache_key] = properties
+
+        body = properties if include_full else self._build_basic_view(properties)
 
         payload = json.dumps(body, ensure_ascii=False, indent=2)
         yield self.create_variable_message("fields", body)
+        yield self.create_json_message(body)
         yield self.create_text_message(payload)
+        yield log_response(
+            self,
+            "kintone fields response",
+            {"field_count": len(body)},
+        )
 
     def _build_basic_view(self, properties: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """
@@ -134,17 +188,6 @@ class KintoneGetFieldsTool(Tool):
                 field_info["fields"] = self._build_nested_fields(config["fields"])
             summary[field_code] = field_info
         return summary
-
-    def _normalize_app_id(self, app_id: Any) -> int:
-        """
-        ユーザー入力のアプリIDを整数へ正規化する。空白や小数表現を許容するが、整数に変換できなければ例外を投げる。
-        """
-
-        # 文字列・数値のどちらでも動作するように str → strip → int 化する
-        cleaned = str(app_id).strip()
-        if not cleaned:
-            raise ValueError("empty app id")
-        return int(cleaned)
 
     def _extract_error_detail(self, error: HTTPError) -> str:
         """

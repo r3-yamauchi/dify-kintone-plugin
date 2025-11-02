@@ -4,7 +4,7 @@
 # why: ユーザーが正しいJSON構造でレコード追加リクエストを組み立てられるようにするため。
 """
 from collections.abc import Generator
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
@@ -106,5 +106,37 @@ class KintoneRecordDataDocTool(Tool):
 
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:
         # パラメータは受け取らず、定義済みドキュメントを返すだけ。
-        yield self.create_text_message(RECORD_DATA_DOCUMENT)
+        document = RECORD_DATA_DOCUMENT.strip()
+        if not document:
+            yield self.create_text_message("record_data ドキュメントが定義されていません。開発者に連絡してください。")
+            return
 
+        structured = self._build_structured_doc(document)
+        yield self.create_variable_message("record_data_doc_markdown", document)
+        yield self.create_json_message(structured)
+        yield self.create_text_message(document)
+
+    def _build_structured_doc(self, markdown: str) -> Dict[str, Any]:
+        """Markdown文字列から簡易的なセクション構造を生成する。"""
+
+        sections: List[Dict[str, Any]] = []
+        current_section: Dict[str, Any] | None = None
+        for line in markdown.splitlines():
+            if line.startswith("## "):
+                heading = line.replace("## ", "").strip()
+                current_section = {"heading": heading, "content": []}
+                sections.append(current_section)
+                continue
+            if current_section is not None:
+                current_section["content"].append(line)
+
+        for section in sections:
+            # 余計な空行を除去しつつ再結合
+            content_lines = [item for item in section["content"] if item.strip() or len(section["content"]) == 1]
+            section["content"] = "\n".join(content_lines).strip()
+
+        return {
+            "title": "record_data構文ガイド",
+            "sections": sections,
+            "format": "markdown",
+        }

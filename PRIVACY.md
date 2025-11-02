@@ -1,33 +1,34 @@
-# プライバシーポリシー
+# Privacy
 
-## 1. はじめに
-本プライバシーポリシー（以下、「ポリシー」といいます）は、Dify向けkintoneプラグイン（以下、「本プラグイン」といいます）を利用する際に、ユーザーの個人情報をどのように収集、利用、保護するかについて説明するものです。本プラグインを使用することにより、ユーザーは以下の内容に同意したものとみなされます。
+The kintone plugin respects user privacy and handles data with care. Here's what you need to know about data collection and usage:
 
-## 2. 収集する情報
-本プラグインは、以下の認証情報をDify内に保存します：
-- **cybozu.comドメイン名**
-- **kintoneのアプリID**
-- **kintoneのAPIトークン**
+## Data Collection
 
-これらの情報は、Difyシステムとの連携を確立するために使用されます。また、これらの情報には個人を特定できる情報は含まれません。
+- **kintone Domain/App ID/API Token:** The required credentials are your kintone domain, kintone app ID, and an API token with granted view permissions.
+- **Request Destination:** kintone REST API: `https://{kintone-domain}/k/v1/records.json`
+- **Request Content:** A query string specifying filtering conditions for kintone records and the fields to retrieve. Both are optional; if not specified, all records and all fields in the target app will be retrieved.
+- **No Personal Data Collection:** We do not collect or store any personal user data.
 
-## 3. 情報の使用目的
-収集した認証情報は、以下の目的で使用されます：
-- 本プラグインの正常な機能の提供
-- Difyとの連携に必要な認証の実施
+## Data Usage
 
-## 4. 情報の保存期間
-収集した認証情報は、ユーザーの要求に基づいてサービス提供が終了するまで、または法的義務を遵守するために必要な期間のみ保存されます。
+- The kintone domain, app ID, and API token are used solely for sending requests to [the kintone REST API to retrieve multiple specified kintone records](https://kintone.dev/en/docs/kintone/rest-api/records/get-records/) .
+- Message content is only used for delivery and is not stored or logged.
+- All communication is done through kintone's official API endpoints.
 
-## 5. 情報の共有
-収集した認証情報は、第三者に提供することはありません。ただし、法的義務に従う場合や、サービス提供のために必要な場合を除きます。
+## Data Storage
 
-## 6. セキュリティ
-収集した認証情報は、適切なセキュリティ措置を講じて保護します。APIトークンなどの機密情報に対しては、暗号化などの技術的な対策を行います。
+- No data is permanently stored by this plugin.
+- Credentials are stored securely by the Dify platform.
+- Message content is transmitted only and not retained.
 
-## 7. ユーザーの権利
-ユーザーは、自身の認証情報の確認、修正、削除を要求することができます。認証情報の削除を希望する場合は、プラグインの利用を停止することができます。
+## Third-party Services
 
-## 8. プライバシーポリシーの変更
-本ポリシーは予告なく変更することがあります。
+- This plugin only interacts with kintone's official API service.
+- No other third-party services are used.
 
+## Security
+
+- All communication with kintone API is done via HTTPS.
+- Error messages are sanitized to prevent sensitive information leakage.
+
+For any privacy concerns or questions, please contact the plugin author or raise an issue on the GitHub repository.

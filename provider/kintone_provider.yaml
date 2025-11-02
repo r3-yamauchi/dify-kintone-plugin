@@ -12,6 +12,43 @@ identity:
     pt_BR: kintone Plugin
     ja_JP: kintone プラグイン
   icon: icon.svg
+credentials_for_provider:
+  kintone_domain:
+    type: text-input
+    required: false
+    label:
+      en_US: "kintone Domain"
+      zh_Hans: "kintone 域名"
+      pt_BR: "Domínio kintone"
+      ja_JP: "kintone ドメイン"
+    help:
+      en_US: "Set the default kintone domain (e.g., your-subdomain.cybozu.com)."
+      zh_Hans: "设置默认的 kintone 域名（例如 your-subdomain.cybozu.com）。"
+      pt_BR: "Defina o domínio padrão do kintone (ex.: your-subdomain.cybozu.com)."
+      ja_JP: "デフォルトのkintoneドメインを設定します（例: your-subdomain.cybozu.com）。"
+    placeholder:
+      en_US: "your-subdomain.cybozu.com"
+      zh_Hans: "your-subdomain.cybozu.com"
+      pt_BR: "your-subdomain.cybozu.com"
+      ja_JP: "your-subdomain.cybozu.com"
+  kintone_api_token:
+    type: secret-input
+    required: false
+    label:
+      en_US: "kintone API Token"
+      zh_Hans: "kintone API 令牌"
+      pt_BR: "Token de API kintone"
+      ja_JP: "kintone APIトークン"
+    help:
+      en_US: "Store the default API token with the required permissions."
+      zh_Hans: "保存具有所需权限的默认 API 令牌。"
+      pt_BR: "Armazene o token de API padrão com as permissões necessárias."
+      ja_JP: "必要な権限を持つデフォルトのAPIトークンを保存します。"
+    placeholder:
+      en_US: "your-api-token1, api-token2, api-token3"
+      zh_Hans: "your-api-token1, api-token2, api-token3"
+      pt_BR: "your-api-token1, api-token2, api-token3"
+      ja_JP: "your-api-token1, api-token2, api-token3"
 tools:
   - tools/kintone_query.yaml
   - tools/kintone_add_record.yaml

@@ -8,37 +8,87 @@ from requests.exceptions import RequestException, Timeout, HTTPError
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
+from .common import (
+    build_headers,
+    is_blank,
+    log_parameters,
+    log_response,
+    normalize_api_tokens,
+    normalize_app_id,
+    normalize_domain,
+    resolve_timeout,
+    resolve_tool_parameter,
+)
+
 
 class KintoneAddRecordTool(Tool):
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:
         # kintone の認証情報およびアプリIDを取得
-        kintone_domain = tool_parameters.get("kintone_domain")
-        if not kintone_domain:
+        raw_domain = resolve_tool_parameter(self, tool_parameters, "kintone_domain")
+        if is_blank(raw_domain):
             yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
             return
 
-        kintone_app_id = tool_parameters.get("kintone_app_id")
-        if not kintone_app_id:
-            yield self.create_text_message("kintone アプリIDが見つかりません。kintone_app_idパラメータを確認してください。")
+        try:
+            kintone_domain = normalize_domain(raw_domain)
+        except ValueError:
+            yield self.create_text_message("kintone ドメインが見つかりません。kintone_domainパラメータを確認してください。")
             return
 
-        kintone_api_token = tool_parameters.get("kintone_api_token")
-        if not kintone_api_token:
-            yield self.create_text_message("kintone APIトークンが見つかりません。kintone_api_tokenパラメータを確認してください。")
+        try:
+            kintone_app_id = normalize_app_id(tool_parameters.get("kintone_app_id"))
+        except ValueError:
+            yield self.create_text_message("kintone アプリIDには正の整数を指定してください。")
+            return
+
+        try:
+            kintone_api_token = normalize_api_tokens(
+                resolve_tool_parameter(self, tool_parameters, "kintone_api_token")
+            )
+        except ValueError as error:
+            yield self.create_text_message(str(error))
             return
 
         # レコードデータの取得
         record_data = tool_parameters.get("record_data")
-        if not record_data:
+        if record_data in (None, ""):
             yield self.create_text_message("レコードデータが見つかりません。record_dataパラメータを確認してください。")
             return
 
+        yield log_parameters(
+            self,
+            {
+                "kintone_domain": kintone_domain,
+                "kintone_app_id": kintone_app_id,
+                "has_record_data": bool(record_data),
+            },
+        )
+
         # レコードデータをJSONとして解析
         try:
-            record_json = json.loads(record_data)
-        except json.JSONDecodeError:
-            yield self.create_text_message("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+            record_json = self._normalize_record_payload(record_data)
+        except ValueError as error:
+            yield self.create_text_message(str(error))
             return
+
+        field_count = len(record_json)
+        attachment_fields = sum(
+            1
+            for value in record_json.values()
+            if isinstance(value, dict)
+            and isinstance(value.get("value"), list)
+            and value["value"]
+            and isinstance(value["value"][0], dict)
+            and "fileKey" in value["value"][0]
+        )
+
+        yield self.create_log_message(
+            label="Record payload summary",
+            data={
+                "field_count": field_count,
+                "attachment_field_count": attachment_fields,
+            },
+        )
 
         # レコードデータの基本的な構造を検証
         validation_errors = self._validate_record_structure(record_json)
@@ -48,16 +98,13 @@ class KintoneAddRecordTool(Tool):
             return
 
         try:
-            timeout_seconds = self._resolve_timeout(tool_parameters.get("request_timeout"), 10.0)
+            timeout_seconds = resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
         except ValueError:
             yield self.create_text_message("request_timeout には正の数値を指定してください。")
             return
 
         # APIリクエスト用のヘッダー設定
-        headers = {
-            "X-Cybozu-API-Token": kintone_api_token,
-            "Content-Type": "application/json"
-        }
+        headers = build_headers(kintone_api_token)
 
         # kintone のレコード追加 API のエンドポイント
         url = f"https://{kintone_domain}/k/v1/record.json"
@@ -107,6 +154,8 @@ class KintoneAddRecordTool(Tool):
                 yield self.create_text_message("kintone APIからの応答を解析できませんでした。無効なJSONレスポンスです。")
                 return
 
+            yield log_response(self, "kintone add record response", data)
+
             # レコードIDの取得
             record_id = data.get("id")
             if not record_id:
@@ -116,7 +165,19 @@ class KintoneAddRecordTool(Tool):
             # 成功メッセージを返す
             yield self.create_variable_message("record_id", record_id)
             yield self.create_variable_message("response", data)
-            success_message = f"レコードが正常に追加されました。レコードID: {record_id}"
+            revision = data.get("revision")
+            yield self.create_json_message(
+                {
+                    "record_id": record_id,
+                    "revision": revision,
+                    "app_id": kintone_app_id,
+                    "field_count": field_count,
+                }
+            )
+            if revision is not None:
+                success_message = f"レコードが正常に追加されました。レコードID: {record_id} / リビジョン: {revision}"
+            else:
+                success_message = f"レコードが正常に追加されました。レコードID: {record_id}"
             yield self.create_text_message(success_message)
 
         except Exception as e:
@@ -159,16 +220,18 @@ class KintoneAddRecordTool(Tool):
                 
         return errors
 
-    def _resolve_timeout(self, value: Any, default: float) -> float:
-        """タイムアウト秒数のパラメータを正の数値に正規化する。"""
+    def _normalize_record_payload(self, payload: Any) -> Dict[str, Any]:
+        """record_dataパラメータを辞書形式に正規化する。"""
 
-        if value is None:
-            return default
-        try:
-            timeout = float(value)
-        except (TypeError, ValueError):
-            raise ValueError
-        if timeout <= 0:
-            raise ValueError
-        return timeout
-        
+        if isinstance(payload, dict):
+            return payload
+
+        if isinstance(payload, str):
+            try:
+                parsed = json.loads(payload)
+            except json.JSONDecodeError:
+                raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。") from None
+            if isinstance(parsed, dict):
+                return parsed
+
+        raise ValueError("レコードデータはJSONオブジェクト形式で指定してください。")

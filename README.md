@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.0.8
+**Version:** 0.1.0
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -35,7 +35,8 @@ The source code of this plugin is available in the [GitHub repository](https://g
 
 ## Configuration
 
-This plugin has no configuration settings.
+1. In the provider settings, you can supply values for `kintone_domain` and `kintone_api_token`. The token accepts up to nine comma-separated entries (e.g., `token1,token2`); providing ten or more triggers a validation error.
+2. Each tool also allows you to specify an API token. When left unset, the provider-level token is used; when provided, the tool-level value takes precedence.
 
 ## Usage Examples
 
@@ -74,6 +75,54 @@ This plugin has no configuration settings.
 ```
 
 Optional parameter: specify `request_timeout` (seconds) to adjust the API timeout (default 30 seconds).
+
+You can also use the optional `output_mode` parameter to choose the response format.
+
+| Value | Behavior |
+| --- | --- |
+| `text_only` | Returns only the text output. |
+| `json_stream` | Streams the JSON payload page by page without the text output. |
+| `both` (default) | Returns both the text summary and the aggregated JSON payload. |
+
+A typical response looks like:
+
+```
+Text:
+取得したレコード件数: 12
+CustomerName: ACME Inc.
+Representative: Yamada
+---
+CustomerName: Beta Trading
+Representative: Sato
+...
+
+JSON:
+{
+  "summary": {
+    "total_records": 12,
+    "requests_made": 3,
+    "request_limit": 500,
+    "initial_offset": 0,
+    "final_offset": 1000,
+    "used_pagination": true,
+    "fields": ["CustomerName", "Representative"],
+    "effective_query": "Status = \"完了\" order by 更新日時 desc",
+    "user_defined_limit": null,
+    "user_defined_offset": null
+  },
+  "records": [
+    {
+      "CustomerName": {"type": "SINGLE_LINE_TEXT", "value": "ACME Inc."},
+      "Representative": {"type": "SINGLE_LINE_TEXT", "value": "Yamada"}
+    },
+    {
+      "CustomerName": {"type": "SINGLE_LINE_TEXT", "value": "Beta Trading"},
+      "Representative": {"type": "SINGLE_LINE_TEXT", "value": "Sato"}
+    },
+    ...
+  ]
+}
+```
 
 ### 2. kintone Get Fields
 

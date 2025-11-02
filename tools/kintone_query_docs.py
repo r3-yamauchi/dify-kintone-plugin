@@ -431,4 +431,6 @@ class KintoneQueryDocTool(Tool):
             yield self.create_text_message("クエリ仕様がツールに埋め込まれていません。開発者に連絡してください。")
             return
 
+        yield self.create_variable_message("kintone_query_doc", document)
+        yield self.create_json_message({"document": document, "format": "markdown"})
         yield self.create_text_message(document)
