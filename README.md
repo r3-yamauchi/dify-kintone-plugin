@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.0
+**Version:** 0.1.1
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)

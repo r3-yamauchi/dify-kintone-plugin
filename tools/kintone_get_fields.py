@@ -11,7 +11,8 @@ import requests
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from dify_plugin import Tool
-from dify_plugin.entities.tool import ToolInvokeMessage
+from dify_plugin.core.runtime import Session
+from dify_plugin.entities.tool import ToolInvokeMessage, ToolRuntime
 
 from .common import (
     build_headers,
@@ -33,8 +34,8 @@ class KintoneGetFieldsTool(Tool):
     kintone のフォーム設定 API を呼び出し、出力モードに応じたフィールド情報を返す。
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, runtime: ToolRuntime, session: Session) -> None:
+        super().__init__(runtime, session)
         self._fields_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 
     _BASIC_EXCLUDE_TYPES = {"GROUP", "RECORD_NUMBER", "REFERENCE_TABLE"}

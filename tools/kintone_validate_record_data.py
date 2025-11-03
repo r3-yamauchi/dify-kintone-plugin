@@ -12,7 +12,8 @@ import requests
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from dify_plugin import Tool
-from dify_plugin.entities.tool import ToolInvokeMessage
+from dify_plugin.core.runtime import Session
+from dify_plugin.entities.tool import ToolInvokeMessage, ToolRuntime
 
 from .common import (
     build_headers,
@@ -29,8 +30,8 @@ from .common import (
 class KintoneValidateRecordDataTool(Tool):
     """record_data文字列の構文とフィールド型整合性を検証するツール。"""
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, runtime: ToolRuntime, session: Session) -> None:
+        super().__init__(runtime, session)
         self._fields_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
 
     def _invoke(self, tool_parameters: Dict[str, Any]) -> Generator[ToolInvokeMessage, None, None]:

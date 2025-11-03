@@ -1,7 +1,7 @@
 # dify-kintone-plugin
 
 **Author:** r3-yamauchi
-**Version:** 0.1.0
+**Version:** 0.1.1
 **Type:** tool
 
 ## Description
