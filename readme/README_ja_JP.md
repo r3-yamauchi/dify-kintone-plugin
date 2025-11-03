@@ -1,7 +1,7 @@
 # dify-kintone-plugin
 
 **Author:** r3-yamauchi
-**Version:** 0.1.1
+**Version:** 0.1.2
 **Type:** tool
 
 ## Description
@@ -18,9 +18,11 @@
 - kintoneのドメインとアプリIDを指定してフィールド定義を取得
 - kintoneのクエリ構文仕様文字列を取得
 - kintone_add_record向け`record_data`構文リファレンスを取得
-- 専用ツールで `record_data` を事前検証してからレコード追加を実行
+- `record_data` の内容を検証
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
 - kintoneのドメインとアプリIDを指定して複数レコードを一括追加・更新（upsert）
+- JSON文字列または配列からupdateKey付きのupsert用`records_data`を生成
+- JSON文字列または配列からkintoneテーブル(SUBTABLE)行構造を生成
 - kintoneからファイルをダウンロード
 - Difyで受け取ったファイルをkintoneへアップロードしfileKeyを取得
 
@@ -257,7 +259,79 @@ kintoneのクエリ構文に関する説明文書を返します。
 }
 ```
 
-### 8. kintone Download File
+### 8. kintone Build Records Data
+
+JSON文字列または配列のオブジェクトから、`kintone_upsert_records` が期待する `records_data` を生成し、指定した `updateKey` を自動で付与します。
+
+```json
+{
+  "records_source": "[{\"コード\": \"A-001\", \"名称\": \"初期データ\"}, {\"コード\": \"A-002\", \"名称\": \"2件目\"}]",
+  "updateKey": "コード"
+}
+```
+
+レスポンス例:
+
+```json
+{
+  "records_data": {
+    "records": [
+      {
+        "updateKey": {"field": "コード", "value": "A-001"},
+        "record": {
+          "コード": {"value": "A-001"},
+          "名称": {"value": "初期データ"}
+        }
+      },
+      {
+        "updateKey": {"field": "コード", "value": "A-002"},
+        "record": {
+          "コード": {"value": "A-002"},
+          "名称": {"value": "2件目"}
+        }
+      }
+    ]
+  }
+}
+```
+
+### 9. kintone Build Subtable Rows
+
+JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールドが受け付ける `rows` 形式に変換します。
+
+```json
+{
+  "subtable_source": "[{\"セッションID\": \"D1-101\", \"タイトル\": \"Example\"}]"
+}
+```
+
+レスポンス例:
+
+```json
+{
+  "rows": [
+    {
+      "value": {
+        "セッションID": {"value": "D1-101"},
+        "タイトル": {"value": "Example"}
+      }
+    }
+  ]
+}
+```
+
+配列をそのまま渡すことも可能です。
+
+```json
+{
+  "subtable_source": [
+    {"セッションID": "D1-101", "タイトル": "Example"},
+    {"セッションID": "D1-102", "タイトル": "Another"}
+  ]
+}
+```
+
+### 10. kintone Download File
 
 #### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
 
@@ -276,7 +350,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
 3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
-### 9. kintone Upload File
+### 11. kintone Upload File
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 

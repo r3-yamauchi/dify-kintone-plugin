@@ -57,6 +57,8 @@ tools:
   - tools/kintone_upload_file.yaml
   - tools/kintone_get_fields.yaml
   - tools/kintone_validate_record_data.yaml
+  - tools/kintone_build_records_data.yaml
+  - tools/kintone_build_subtable_rows.yaml
   - tools/kintone_query_docs.yaml
   - tools/kintone_record_data_docs.yaml
 extra:

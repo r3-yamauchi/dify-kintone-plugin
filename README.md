@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.1
+**Version:** 0.1.2
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -23,6 +23,8 @@ The source code of this plugin is available in the [GitHub repository](https://g
 - Validate `record_data` with a dedicated tool before adding records
 - Add a single record by specifying the kintone domain and app ID
 - Upsert (bulk insert/update) multiple records by specifying the kintone domain and app ID
+- Build kintone upsert `records_data` payloads from a JSON string or array input with automatic `updateKey`
+- Build kintone subtable rows (`value` array) from a JSON string or array input
 - Download files from kintone
 - Upload files received by Dify to kintone and obtain the fileKey
 
@@ -259,7 +261,79 @@ Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. 
 }
 ```
 
-### 8. kintone Download File
+### 8. kintone Build Records Data
+
+Convert a JSON string or array of objects into the `records_data` payload expected by `kintone_upsert_records`, automatically populating the `updateKey`.
+
+```json
+{
+  "records_source": "[{\"コード\": \"A-001\", \"名称\": \"初期データ\"}, {\"コード\": \"A-002\", \"名称\": \"2件目\"}]",
+  "updateKey": "コード"
+}
+```
+
+Response example:
+
+```json
+{
+  "records_data": {
+    "records": [
+      {
+        "updateKey": {"field": "コード", "value": "A-001"},
+        "record": {
+          "コード": {"value": "A-001"},
+          "名称": {"value": "初期データ"}
+        }
+      },
+      {
+        "updateKey": {"field": "コード", "value": "A-002"},
+        "record": {
+          "コード": {"value": "A-002"},
+          "名称": {"value": "2件目"}
+        }
+      }
+    ]
+  }
+}
+```
+
+### 9. kintone Build Subtable Rows
+
+Transform a JSON string or array into the `value` array required by a kintone subtable field.
+
+```json
+{
+  "subtable_source": "[{\"セッションID\": \"D1-101\", \"タイトル\": \"Example\"}]"
+}
+```
+
+Response example:
+
+```json
+{
+  "value": [
+    {
+      "value": {
+        "セッションID": {"value": "D1-101"},
+        "タイトル": {"value": "Example"}
+      }
+    }
+  ]
+}
+```
+
+You can also submit an array directly:
+
+```json
+{
+  "subtable_source": [
+    {"セッションID": "D1-101", "タイトル": "Example"},
+    {"セッションID": "D1-102", "タイトル": "Another"}
+  ]
+}
+```
+
+### 10. kintone Download File
 
 #### 1. Download a file from kintone by specifying the file key
 
@@ -277,7 +351,7 @@ Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. 
 2. Check the attachment field in the response (for example: `"Attachment": [{"fileKey": "xxxxxxxx"}]`).
 3. Pass the `fileKey` value to the `file_key` parameter of this tool.
 
-### 9. kintone Upload File
+### 11. kintone Upload File
 
 #### 1. Upload attachments and obtain file keys
 

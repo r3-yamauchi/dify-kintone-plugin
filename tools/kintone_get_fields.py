@@ -219,7 +219,7 @@ class KintoneGetFieldsTool(Tool):
 
     def _build_nested_fields(self, nested_properties: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """
-        サブテーブル等の入れ子になったフィールド情報を整形する。
+        テーブル(SUBTABLE)等の入れ子になったフィールド情報を整形する。
         """
 
         nested_summary: Dict[str, Dict[str, Any]] = {}

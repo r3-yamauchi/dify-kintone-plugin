@@ -1,0 +1,31 @@
+identity:
+  name: kintone_build_subtable_rows
+  author: r3-yamauchi
+  label:
+    en_US: kintone Build Subtable Rows
+    ja_JP: kintone テーブル(SUBTABLE)行生成
+    zh_Hans: kintone 构建子表行
+    pt_BR: kintone Construir Linhas de Subtabela
+description:
+  human:
+    en_US: Build kintone subtable rows from JSON string or array input
+    ja_JP: JSON文字列または配列入力からkintoneテーブル(SUBTABLE)行を生成します
+    zh_Hans: 通过 JSON 字符串或数组输入生成 kintone 子表行
+    pt_BR: Gera linhas de sub-tabela do kintone a partir de string JSON ou array
+  llm: Convert JSON string or array to kintone subtable rows with value-wrapped fields
+parameters:
+  - name: subtable_source
+    type: string
+    required: true
+    label:
+      en_US: "Subtable Source"
+      ja_JP: "テーブル(SUBTABLE)入力"
+    human_description:
+      en_US: "JSON string or array representing rows, e.g. [{\"field\": \"value\"}]"
+      ja_JP: "行を表すJSON文字列または配列。例: [{\"フィールド\": \"値\"}]"
+    llm_description: JSON string or array of objects to convert into subtable rows
+    form: llm
+extra:
+  python:
+    source: tools/kintone_build_subtable_rows.py
+    class: KintoneBuildSubtableRowsTool

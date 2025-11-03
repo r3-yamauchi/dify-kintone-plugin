@@ -1,0 +1,42 @@
+identity:
+  name: kintone_build_records_data
+  author: r3-yamauchi
+  label:
+    en_US: kintone Build Records Data
+    ja_JP: kintone レコードデータ生成
+    zh_Hans: kintone 构建记录数据
+    pt_BR: kintone Construir Dados de Registros
+description:
+  human:
+    en_US: Build kintone records_data payload for upsert API from JSON string or array input
+    ja_JP: JSON文字列または配列入力からkintoneアップサートAPI向けrecords_dataペイロードを生成します
+    zh_Hans: 通过 JSON 字符串或数组输入生成用于 kintone upsert API 的 records_data 负载
+    pt_BR: Gera payload records_data do kintone upsert a partir de string JSON ou array
+  llm: Convert JSON string or array into kintone upsert records_data with updateKey populated per record
+parameters:
+  - name: records_source
+    type: string
+    required: true
+    label:
+      en_US: "Records Source"
+      ja_JP: "レコード入力"
+    human_description:
+      en_US: "JSON string or array of objects to convert into records_data. Same format as kintone_build_subtable_rows input."
+      ja_JP: "records_dataへ変換するオブジェクト配列のJSON文字列または配列。kintone_build_subtable_rowsの入力形式と同じです。"
+    llm_description: JSON string or array representing records to upsert
+    form: llm
+  - name: updateKey
+    type: string
+    required: true
+    label:
+      en_US: "Update Key Field Code"
+      ja_JP: "updateKey フィールドコード"
+    human_description:
+      en_US: "Field code used as updateKey. The value for each record will be copied into updateKey.value."
+      ja_JP: "updateKeyとして利用するフィールドコード。各レコードの値を updateKey.value に反映します。"
+    llm_description: Field code used for updateKey in kintone upsert
+    form: llm
+extra:
+  python:
+    source: tools/kintone_build_records_data.py
+    class: KintoneBuildRecordsDataTool
