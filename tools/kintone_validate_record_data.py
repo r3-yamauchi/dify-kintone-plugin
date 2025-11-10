@@ -167,7 +167,7 @@ class KintoneValidateRecordDataTool(Tool):
     def _get_app_fields(self, domain: str, app_id: int, api_token: str) -> Dict[str, str]:
         """kintoneフォーム設定からフィールドタイプ情報を取得する。"""
 
-        cache_key = (f"{domain}:{app_id}", api_token)
+        cache_key = (domain, app_id)
         cached = self._fields_cache.get(cache_key)
         if cached is not None:
             return cached

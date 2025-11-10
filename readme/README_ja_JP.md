@@ -1,14 +1,14 @@
-# dify-kintone-plugin
+# kintone_integration_unofficial
 
 **Author:** r3-yamauchi
-**Version:** 0.1.2
+**Version:** 0.1.3
 **Type:** tool
 
 ## Description
 
-これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを取得するために使用できる [Dify](https://dify.ai/jp) プラグインです。
+これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを読み書きしたり、添付ファイルをアップロード/ダウンロードする際に便利な機能を提供する、**非公式**の [Dify](https://dify.ai/jp) 用ツール・プラグインです。
 
-このプラグインのソースコードは [GitHub リポジトリ](https://github.com/r3-yamauchi/dify-kintone-plugin) で公開しています。
+ソースコードを [GitHub リポジトリ](https://github.com/r3-yamauchi/dify-kintone-plugin) で公開しています。
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/r3-yamauchi/dify-kintone-plugin)
 
@@ -17,14 +17,14 @@
 - kintoneのドメインとアプリIDを指定してレコードを取得
 - kintoneのドメインとアプリIDを指定してフィールド定義を取得
 - kintoneのクエリ構文仕様文字列を取得
-- kintone_add_record向け`record_data`構文リファレンスを取得
-- `record_data` の内容を検証
+- kintone_add_record向け`record_data`構文のリファレンスを取得
+- kintone_add_record向け`record_data`の内容を検証
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
 - kintoneのドメインとアプリIDを指定して複数レコードを一括追加・更新（upsert）
 - JSON文字列または配列からupdateKey付きのupsert用`records_data`を生成
 - JSON文字列または配列からkintoneテーブル(SUBTABLE)行構造を生成
-- kintoneからファイルをダウンロード
-- Difyで受け取ったファイルをkintoneへアップロードしfileKeyを取得
+- fileKeyを指定してkintoneからファイルをダウンロード
+- ファイルをkintoneへアップロードし、一時的なfileKeyを取得
 
 ## Prerequisites
 
@@ -34,8 +34,8 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 
 ## 設定
 
-1. プラグインのプロバイダー設定画面で `kintone_domain` と `kintone_api_token` の値を入力できます。APIトークンはカンマ区切り（例: `token1,token2`）で 9個まで指定でき、10個以上を指定すると検証エラーになります。
-2. 各ツールでも APIトークンを指定できます。各ツールで指定しない場合はプロバイダー設定値が使われ、指定するとその値が使用されます。
+1. プラグインのプロバイダー設定画面で `kintone_domain` と `kintone_api_token` の値を入力できます。APIトークンはカンマ区切り形式（例: `token1,token2`）で最大9個まで指定でき、10個以上を指定するとエラーになります。
+2. 各ツールでも APIトークンを指定できます。各ツールで指定しない場合はプロバイダー設定値が使われ、指定するとその値が上書き使用されます（プロバイダー設定したAPIトークンは使用されません）
 
 ## Usage Examples
 
@@ -47,7 +47,7 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz"
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
 
@@ -57,7 +57,7 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "query": "field1 >= 100"
 }
 ```
@@ -68,7 +68,7 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "fields": "field1, field2, field3"
 }
 ```
@@ -131,7 +131,7 @@ JSON:
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz"
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
 
@@ -144,7 +144,7 @@ JSON:
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "detail_level": true
 }
 ```
@@ -165,7 +165,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": {
     "text_field": {"value": "サンプルテキスト"},
     "number_field": {"value": "100"},
@@ -184,7 +184,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": "{\"text_field\": {\"value\": \"サンプルテキスト\"}, \"number_field\": {\"value\": 100}}"
 }
 ```
@@ -203,7 +203,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
       {
@@ -231,7 +231,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 {
   "kintone_domain": "dev-demo.cybozu.com",
   "kintone_app_id": 123,
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
       {
@@ -338,7 +338,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "file_key": "20250301010101E3C4F3D8871A4BA28360BA3F798D0455165"
 }
 ```
@@ -359,7 +359,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_api_token": "abcdefghijklmnopqrstuvwxyz",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "file_names": "report.pdf"
 }
 ```

@@ -1,17 +1,17 @@
-version: 0.1.2
+version: 0.1.3
 type: plugin
 author: r3-yamauchi
-name: kintone_integration
+name: kintone_integration_unofficial
 label:
-  en_US: kintone_integration
-  ja_JP: kintone_integration
-  zh_Hans: kintone_integration
-  pt_BR: kintone_integration
+  en_US: "Unofficial plugin for reading and writing kintone records"
+  ja_JP: "kintoneレコードを読み書きする非公式のプラグイン"
+  zh_Hans: "用于读写 kintone 记录的非官方插件"
+  pt_BR: "Plugin não oficial para ler e gravar registros do kintone"
 description:
-  en_US: kintone Plugin
-  ja_JP: kintone Plugin
-  zh_Hans: kintone Plugin
-  pt_BR: kintone Plugin
+  en_US: "Provides convenient features for reading/writing kintone records and uploading/downloading attachments"
+  ja_JP: "kintoneレコードを読み書きしたり、添付ファイルをアップロード/ダウンロードする際に便利な機能を提供します"
+  zh_Hans: "提供便捷功能，可读取/写入 kintone 记录并上传/下载附件"
+  pt_BR: "Oferece recursos práticos para ler/gravar registros do kintone e fazer upload/download de anexos"
 icon: icon.svg
 resource:
   memory: 268435456
@@ -22,7 +22,7 @@ plugins:
   tools:
     - provider/kintone_provider.yaml
 meta:
-  version: 0.1.2
+  version: 0.1.3
   arch:
     - amd64
     - arm64

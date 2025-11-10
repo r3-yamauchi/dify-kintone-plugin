@@ -250,45 +250,41 @@ class KintoneUploadFileTool(Tool):
         else:
             payload_count = 1
 
-        def _sanitize_list(values: List[Any]) -> List[str] | None:
+        def _sanitize_list(values: List[Any]) -> List[str]:
             sanitized: List[str] = []
             for value in values:
                 if not isinstance(value, str):
-                    return None
+                    raise ValueError("file_names の各要素は文字列で指定してください。")
                 trimmed = value.strip()
                 if not trimmed:
-                    return None
+                    raise ValueError("file_names に空の値が含まれています。")
                 try:
                     sanitized.append(self._normalize_filename(trimmed))
                 except ValueError:
-                    return None
+                    raise ValueError("file_names に無効なファイル名が含まれています。") from None
             return sanitized
 
         if isinstance(raw_names, list):
             cleaned = _sanitize_list(raw_names)
-            if cleaned is None:
-                return None
         elif isinstance(raw_names, str):
             stripped = raw_names.strip()
             if not stripped:
-                return None
+                raise ValueError("file_names が空文字列です。")
             if stripped.startswith('['):
                 try:
                     parsed = json.loads(stripped)
-                except json.JSONDecodeError:
-                    return None
+                except json.JSONDecodeError as exc:
+                    raise ValueError("file_names をJSON配列として解析できませんでした。") from exc
                 if not isinstance(parsed, list):
-                    return None
+                    raise ValueError("file_names をJSON配列で指定してください。")
                 cleaned = _sanitize_list(parsed)
-                if cleaned is None:
-                    return None
             else:
                 try:
                     cleaned = [self._normalize_filename(stripped)]
                 except ValueError:
-                    return None
+                    raise ValueError("file_names に無効なファイル名が含まれています。") from None
         else:
-            return None
+            raise ValueError("file_names は文字列または配列で指定してください。")
 
         if payload_count == 1:
             if len(cleaned) > 1:
