@@ -1,7 +1,7 @@
 # kintone_integration_unofficial
 
 **Author:** r3-yamauchi
-**Version:** 0.1.3
+**Version:** 0.1.4
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -367,8 +367,8 @@ Specify one or more files via `upload_file`. Dify automatically supplies the fil
 
 The response always contains the `uploaded_files` variable, a list of objects that hold the returned `fileKey` values.
 
-- Single file example: `uploaded_files = [{"fileKey": "202510301234ABCD"}]`
-- Multiple files example: `uploaded_files = [{"fileKey": "20251030AAA"}, {"fileKey": "20251030BBB"}]`
+- Single file example: `uploaded_files = [{"fileKey": "c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6"}]`
+- Multiple files example: `uploaded_files = [{"fileKey": "c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6"}, {"fileKey": "a12b3456-7890-1ab2-3d4d-b5bdbc67f8d9"}]`
 
 Standard outputs are populated as follows:
 
@@ -444,7 +444,7 @@ outputs["records_data"] = json.dumps({"records": records}, ensure_ascii=False)
 
 Using `records_mapping` bypasses all of these extra nodes/scripts so the workflow can simply be `kintone_upload_file → kintone_upsert_records` by selecting `nodes.upload_file_to_kintone.outputs.json.records_data` for the `records_data` parameter (or `text` if you prefer the raw JSON string).
 
-A text message describing the upload is also returned. For a single file you’ll see, for example, `Uploaded file 'report.pdf' successfully. fileKey: 202510301234ABCD`; for multiple files the message lists the count plus the filenames and file keys (`Uploaded 2 files. Files: report1.pdf, report2.pdf / fileKeys: ...`).
+A text message describing the upload is also returned. For a single file you’ll see, for example, `Uploaded file 'report.pdf' successfully. fileKey: c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6`; for multiple files the message lists the count plus the filenames and file keys (`Uploaded 2 files. Files: report1.pdf, report2.pdf / fileKeys: ...`).
 
 Optional parameter: specify `request_timeout` (seconds) to set the timeout for bulk requests (default 30 seconds).
 

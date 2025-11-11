@@ -62,7 +62,14 @@ class KintoneTool(Tool):
 
         # クエリ文字列の取得
         query_str = tool_parameters.get("query", "")
-        clean_query, user_limit, user_offset, has_limit, has_offset = self._normalize_query(query_str)
+        (
+            clean_query,
+            user_limit,
+            user_offset,
+            has_limit,
+            has_offset,
+            has_order_by,
+        ) = self._normalize_query(query_str)
 
         if has_limit and user_limit and user_limit > 500:
             yield self.create_text_message(
@@ -109,6 +116,8 @@ class KintoneTool(Tool):
         #   - 全件取得するためにページネーションを行う
         #   - デフォルトのlimit値（500）を使用して複数回APIを呼び出す
         should_paginate = not has_limit
+        use_record_id_paging = should_paginate and not has_order_by
+        pagination_strategy = "record_id" if use_record_id_paging else "offset"
 
         pagination_mode_log = self.create_log_message(
             label="Pagination mode",
@@ -117,6 +126,7 @@ class KintoneTool(Tool):
                 "effective_limit": limit,
                 "start_offset": initial_offset,
                 "output_mode": output_mode,
+                "strategy": pagination_strategy,
             },
         )
         yield pagination_mode_log
@@ -126,6 +136,9 @@ class KintoneTool(Tool):
         text_records: list[list[str]] | None = [] if produce_text else None
         total_records = 0
         page_count = 0
+        last_record_id: Optional[int] = None
+        record_id_cursor: Optional[int] = 0 if use_record_id_paging else None
+        offset_query_with_guard: Optional[str] = None if use_record_id_paging else self._ensure_min_record_id_condition(clean_query, 0)
 
         # フィールドリストの処理
         fields_list = None
@@ -138,6 +151,10 @@ class KintoneTool(Tool):
                 return
             if parsed_fields:
                 fields_list = parsed_fields
+
+        if fields_list is not None:
+            fields_list = [*fields_list, "$id"]
+            fields_list = self._deduplicate_fields(fields_list)
 
         try:
             timeout_seconds = resolve_timeout(tool_parameters.get("request_timeout"), 30.0)
@@ -168,12 +185,28 @@ class KintoneTool(Tool):
         try:
             # ページネーションを使用して全レコードを取得
             while True:
-                # クエリ文字列にlimitとoffsetを追加
-                query = clean_query
-                if query:
-                    query += f" limit {limit} offset {offset}"
+                # クエリ文字列にページング条件を追加
+                if use_record_id_paging:
+                    base_query = clean_query
+                    if record_id_cursor is not None:
+                        id_condition = f"$id > {record_id_cursor}"
+                        if base_query:
+                            base_query = f"{base_query} and {id_condition}"
+                        else:
+                            base_query = id_condition
+
+                    query_parts = []
+                    if base_query:
+                        query_parts.append(base_query)
+                    query_parts.append("order by $id asc")
+                    query_parts.append(f"limit {limit}")
+                    query = " ".join(query_parts).strip()
                 else:
-                    query = f"limit {limit} offset {offset}"
+                    query_core = offset_query_with_guard or ""
+                    if query_core:
+                        query = f"{query_core} limit {limit} offset {offset}"
+                    else:
+                        query = f"$id > 0 limit {limit} offset {offset}"
 
                 # POSTリクエスト用のJSONボディを作成
                 request_body = {
@@ -273,6 +306,16 @@ class KintoneTool(Tool):
                         }
                     )
 
+                if use_record_id_paging:
+                    last_id_value = self._extract_record_id(records[-1])
+                    if last_id_value is None:
+                        yield self.create_text_message(
+                            "$id フィールドを取得できなかったためページネーションを継続できません。fields パラメータをご確認ください。"
+                        )
+                        return
+                    last_record_id = last_id_value
+                    record_id_cursor = last_id_value
+
                 # ページネーション処理の判断
                 # 1. ユーザーがlimitを指定した場合（should_paginate = False）：
                 #    - 1回だけAPIを呼び出し、指定された件数だけを取得
@@ -286,6 +329,9 @@ class KintoneTool(Tool):
                 if len(records) < limit:
                     break
                         
+                if use_record_id_paging:
+                    continue
+
                 # 次のページのoffsetを設定
                 offset += limit
 
@@ -294,16 +340,19 @@ class KintoneTool(Tool):
                 "requests_made": request_count,
                 "request_limit": limit,
                 "initial_offset": initial_offset,
-                "final_offset": offset,
+                "final_offset": None if use_record_id_paging else offset,
                 "used_pagination": should_paginate,
                 "fields": fields_list,
                 "effective_query": clean_query or None,
                 "pages": page_count,
+                "pagination_strategy": pagination_strategy,
             }
             if has_limit:
                 summary_payload["user_defined_limit"] = user_limit
             if has_offset:
                 summary_payload["user_defined_offset"] = user_offset
+            if use_record_id_paging and last_record_id is not None:
+                summary_payload["last_record_id"] = last_record_id
 
             if output_mode == "both":
                 records_output = all_records or []
@@ -335,6 +384,7 @@ class KintoneTool(Tool):
                     "total_records": total_records,
                     "requests_made": request_count,
                     "output_mode": output_mode,
+                    "pagination_strategy": pagination_strategy,
                 },
             )
 
@@ -345,13 +395,13 @@ class KintoneTool(Tool):
 
     def _normalize_query(
         self, raw_query: Optional[str]
-    ) -> tuple[str, Optional[int], Optional[int], bool, bool]:
+    ) -> tuple[str, Optional[int], Optional[int], bool, bool, bool]:
         """
         クエリ文字列からlimit/offsetを取り除き、余分な結合演算子を整形する。
         """
         query = (raw_query or "").strip()
         if not query:
-            return "", None, None, False, False
+            return "", None, None, False, False, False
 
         limit_match = re.search(r"\blimit\s+(\d+)", query, flags=re.IGNORECASE)
         has_limit = bool(limit_match)
@@ -369,8 +419,9 @@ class KintoneTool(Tool):
 
         clean_query = re.sub(r"\s+", " ", clean_query).strip()
         clean_query = self._remove_trailing_connectors(clean_query)
+        has_order_by = bool(re.search(r"\border\s+by\b", clean_query, flags=re.IGNORECASE))
 
-        return clean_query, user_limit, user_offset, has_limit, has_offset
+        return clean_query, user_limit, user_offset, has_limit, has_offset, has_order_by
 
     @staticmethod
     def _resolve_output_mode(raw_mode: Any) -> str:
@@ -419,6 +470,19 @@ class KintoneTool(Tool):
         return cleaned
 
     @staticmethod
+    def _deduplicate_fields(fields: list[str]) -> list[str]:
+        """fieldsリストから重複を除去し、指定順序を維持する。"""
+
+        seen: set[str] = set()
+        result: list[str] = []
+        for field in fields:
+            if field in seen:
+                continue
+            seen.add(field)
+            result.append(field)
+        return result
+
+    @staticmethod
     def _remove_trailing_connectors(query: str) -> str:
         """
         末尾に残った and / or / order by などの不要な結合記号を取り除く。
@@ -451,6 +515,46 @@ class KintoneTool(Tool):
         if len(text) > 200:
             text = f"{text[:197]}..."
         return text
+
+    @staticmethod
+    def _extract_record_id(record: Dict[str, Any]) -> Optional[int]:
+        """レコードから $id の整数値を取り出す。"""
+
+        field = record.get("$id")
+        if field is None:
+            return None
+
+        value = field
+        if isinstance(field, dict):
+            value = field.get("value")
+
+        try:
+            return int(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _ensure_min_record_id_condition(query: str, minimum_id: int) -> str:
+        """order by 句の前で $id > minimum_id を必ず付与する。"""
+
+        condition = f"$id > {minimum_id}"
+        base = (query or "").strip()
+        if not base:
+            return condition
+
+        order_match = re.search(r"\border\s+by\b", base, flags=re.IGNORECASE)
+        if not order_match:
+            return f"{base} and {condition}"
+
+        prefix = base[: order_match.start()].strip()
+        suffix = base[order_match.start():].strip()
+
+        if prefix:
+            prefix = f"{prefix} and {condition}"
+        else:
+            prefix = condition
+
+        return f"{prefix} {suffix}".strip()
 
 
 def get_field_value(record: Dict[str, Any], field_name: str) -> str:

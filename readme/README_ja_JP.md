@@ -1,7 +1,7 @@
 # kintone_integration_unofficial
 
 **Author:** r3-yamauchi
-**Version:** 0.1.3
+**Version:** 0.1.4
 **Type:** tool
 
 ## Description
@@ -136,7 +136,7 @@ JSON:
 ```
 
 フィールドコードやフィールドタイプといった基本的な情報を返します。
-また、関連レコードの情報は返しません。
+関連レコードの情報は返しません。
 
 #### 2. フル情報を取得する
 
@@ -149,7 +149,8 @@ JSON:
 }
 ```
 
-`detail_level` を `true` にすると、kintone が返すフィールド定義を全てそのまま返します。省略または `false` の場合は主要情報のみです。
+`detail_level` を `true` にすると、kintone が返すフィールド定義を全てそのまま返します。
+省略または `false` の場合は主要情報のみです。
 
 ### 3. kintone Query Docs
 
@@ -178,7 +179,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 ### 5. kintone Validate Record Data
 
-`kintone_add_record` に渡す予定の `record_data` JSON 文字列を、アプリのフィールド定義に基づいて検証します。
+`kintone_add_record` に渡すための `record_data` JSON 文字列を、アプリのフィールド定義に基づいて検証します。
 
 ```json
 {
@@ -189,7 +190,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 }
 ```
 
-構造および型チェックを通過すると、整形済みの JSON をそのまま返すため、次の `kintone_add_record` 呼び出しに再利用できます。検証に失敗した場合は、具体的なエラー内容をメッセージとして返します。
+構造および型チェックを通過すると、整形済みの JSON をそのまま返します。検証に失敗した場合は、具体的なエラー内容をメッセージとして返します。
 
 ### 6. kintone Record Data Docs
 
@@ -354,7 +355,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 
-`upload_file` には 1件以上のファイルを指定できます。Dify のファイル入力コンポーネントから自動的に渡されるため、JSON には記述しません。任意で `request_timeout` を指定できます。
+`upload_file` には 1件以上のファイルを指定できます。任意で `request_timeout` を指定できます。
 
 ```json
 {
@@ -364,10 +365,12 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 }
 ```
 
-応答では変数 `uploaded_files` が常に返り、`fileKey` を保持するオブジェクトのリストとして利用できます。
+応答では変数 `uploaded_files` が常に返り、`fileKey` の入ったオブジェクトのリストとして利用できます。
 
-- 単一ファイル例: `uploaded_files = [{"fileKey": "202510301234ABCD"}]`
-- 複数ファイル例: `uploaded_files = [{"fileKey": "20251030AAA"}, {"fileKey": "20251030BBB"}]`
+- 単一ファイル例: `uploaded_files = [{"fileKey": "c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6"}]`
+- 複数ファイル例: `uploaded_files = [{"fileKey": "c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6"}, {"fileKey": "a12b3456-7890-1ab2-3d4d-b5bdbc67f8d9"}]`
+
+ファイルをアップロードすると kintone内の一時保管領域にファイルが保存され、一時保管領域用の `fileKey` が発行されます。この `fileKey` を使用して kintoneレコードの添付ファイルフィールドにファイルを添付できます。レコードに添付しない場合、一時保管領域のファイルは 3日間で削除されます。
 
 標準出力の扱いは次のとおりです。
 
@@ -467,7 +470,7 @@ outputs["records_data"] = json.dumps({"records": records}, ensure_ascii=False)
 
 `records_mapping` を指定すればこれらのノード（あるいはスクリプト）を省略でき、`kintone_upload_file` → `kintone_upsert_records` を直接つなぐだけで済むため、ワークフローの簡潔さが格段に向上します。
 
-あわせて、アップロード結果を説明するテキストメッセージが返ります。単一ファイルの場合は例: `ファイル 'report.pdf' のアップロードに成功しました。fileKey: 202510301234ABCD`、複数ファイルの場合は `2件のファイルをアップロードしました。ファイル: report1.pdf, report2.pdf / fileKeys: ...` のように件数とファイル名／fileKey の一覧が通知されます。
+あわせて、アップロード結果を説明するテキストメッセージが返ります。単一ファイルの場合は例: `ファイル 'report.pdf' のアップロードに成功しました。fileKey: c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6`、複数ファイルの場合は `2件のファイルをアップロードしました。ファイル: report1.pdf, report2.pdf / fileKeys: ...` のように件数とファイル名／fileKey の一覧が通知されます。
 
 任意パラメータ: `request_timeout`（秒）で一括リクエストのタイムアウトを設定できます（既定値30秒）。
 
