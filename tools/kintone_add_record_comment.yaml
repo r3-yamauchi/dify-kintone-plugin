@@ -1,0 +1,111 @@
+# where: kintone_integration/tools/kintone_add_record_comment.yaml
+# what: kintoneレコードコメント投稿ツールの設定定義
+# why: Difyツール一覧にkintone_add_record_commentを追加するため
+
+identity:
+  name: kintone_add_record_comment
+  author: r3-yamauchi
+  label:
+    en_US: kintone Add Record Comment
+    zh_Hans: kintone 添加记录评论
+    ja_JP: kintone レコードコメント追加
+    pt_BR: kintone Adicionar Comentário
+description:
+  human:
+    en_US: Post a comment to a specific kintone record
+    zh_Hans: 向指定的 kintone 记录发布评论
+    ja_JP: 指定したkintoneレコードにコメントを投稿
+    pt_BR: Publique um comentário em um registro do kintone
+  llm: Add a comment to the specified kintone record, with optional mentions
+parameters:
+  - name: kintone_domain
+    type: string
+    required: false
+    label:
+      en_US: "kintone Domain"
+      ja_JP: "cybozu.com ドメイン"
+    human_description:
+      en_US: "Portion of the kintone URL after https:// (e.g., your-subdomain.cybozu.com). Falls back to provider credentials when omitted."
+      ja_JP: "kintoneのURLのうち https:// より後ろの部分（例: your-subdomain.cybozu.com）。未入力時はプロバイダー設定の値を使います。"
+    llm_description: kintone domain that hosts the target app
+    placeholder:
+      en_US: "your-subdomain.cybozu.com"
+      ja_JP: "your-subdomain.cybozu.com"
+    form: llm
+
+  - name: kintone_app_id
+    type: number
+    required: true
+    label:
+      en_US: "kintone App ID"
+      ja_JP: "kintone アプリID"
+    human_description:
+      en_US: "ID of the kintone app that owns the record"
+      ja_JP: "コメント対象レコードを含むkintoneアプリのID"
+    llm_description: Numeric ID of the kintone app that owns the record
+    form: llm
+
+  - name: kintone_api_token
+    type: secret-input
+    required: false
+    label:
+      en_US: "kintone API Token"
+      ja_JP: "kintone APIトークン"
+    human_description:
+      en_US: "API token with comment permissions for the target app. Falls back to provider credentials when omitted."
+      ja_JP: "対象アプリのコメント投稿権限を持つAPIトークン。省略時はプロバイダー設定の値を利用します。"
+    llm_description: API token that allows posting comments to the target app
+    form: llm
+
+  - name: record_id
+    type: number
+    required: true
+    label:
+      en_US: "Record ID"
+      ja_JP: "レコードID"
+    human_description:
+      en_US: "Record ID (the numeric value shown in the record URL)"
+      ja_JP: "レコードのURLに表示される数値のレコードID"
+    llm_description: kintone record ID to which the comment is posted
+    form: llm
+
+  - name: comment_text
+    type: string
+    required: true
+    label:
+      en_US: "Comment Text"
+      ja_JP: "コメント本文"
+    human_description:
+      en_US: "Plain text content for the comment (max 10,000 characters)"
+      ja_JP: "投稿するコメント本文（最大10,000文字）"
+    llm_description: Comment content to post to the record
+    form: llm
+
+  - name: mentions
+    type: string
+    required: false
+    label:
+      en_US: "Mentions JSON"
+      ja_JP: "メンションJSON"
+    human_description:
+      en_US: "Optional JSON array of mention objects (e.g., [{\"code\":\"user1\",\"type\":\"USER\"}]). Supports USER, GROUP, ORGANIZATION."
+      ja_JP: "任意。メンション対象を示すJSON配列（例: [{\"code\":\"user1\",\"type\":\"USER\"}]）。USER/GROUP/ORGANIZATIONを指定可能です。"
+    llm_description: JSON string describing mention targets (USER/GROUP/ORGANIZATION)
+    form: llm
+
+  - name: request_timeout
+    type: number
+    required: false
+    default: 10
+    label:
+      en_US: "Request Timeout (seconds)"
+      ja_JP: "リクエストタイムアウト（秒）"
+    human_description:
+      en_US: "Timeout in seconds for the kintone API request. Default 10 seconds."
+      ja_JP: "kintone APIリクエストのタイムアウト秒数。既定値は10秒です。"
+    llm_description: Timeout in seconds for the API call; defaults to 10
+    form: llm
+
+extra:
+  python:
+    source: tools/kintone_add_record_comment.py

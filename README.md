@@ -1,7 +1,7 @@
 # kintone_integration_unofficial
 
 **Author:** r3-yamauchi
-**Version:** 0.1.4
+**Version:** 0.1.5
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -22,6 +22,7 @@ The source code of this plugin is available in the [GitHub repository](https://g
 - Retrieve the `record_data` syntax reference for `kintone_add_record`
 - Validate `record_data` with a dedicated tool before adding records
 - Add a single record by specifying the kintone domain and app ID
+- Post comments to an existing record with optional mentions
 - Upsert (bulk insert/update) multiple records by specifying the kintone domain and app ID
 - Build kintone upsert `records_data` payloads from a JSON string or array input with automatic `updateKey`
 - Build kintone subtable rows (`value` array) from a JSON string or array input
@@ -197,7 +198,32 @@ If the structure and types pass validation, the tool returns formatted JSON that
 
 Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. No parameters are required. The response contains sample structures, rules by field type, the plugin’s internal validation rules, and a list of common errors.
 
-### 7. kintone Upsert Records
+### 7. kintone Add Record Comment
+
+#### 1. Post a comment to an existing record
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": 456,
+  "comment_text": "Please review the updated quote.",
+  "mentions": "[{\"code\": \"sales-team\", \"type\": \"GROUP\"}]"
+}
+```
+
+The tool posts plain-text comments to the record’s discussion thread. `comment_text` accepts up to 10,000 characters. Use the optional `mentions` parameter to highlight users, groups, or departments by supplying a JSON array with objects such as `{ "code": "user01", "type": "USER" }`. Supported `type` values are `USER`, `GROUP`, and `ORGANIZATION`. Up to ten mentions can be specified per comment.
+
+When the call succeeds, the response includes:
+
+- `comment_id` variable pointing to the newly created comment
+- `response` variable with the raw JSON from kintone (creator info, timestamps, etc.)
+- `json` message summarizing `comment_id`, `record_id`, `app_id`, `mentions_count`, and `created_at`
+
+Optional parameter: `request_timeout` (seconds) to override the default 10-second timeout.
+
+### 8. kintone Upsert Records
 
 #### 1. Add multiple records at once
 
@@ -261,7 +287,7 @@ Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. 
 }
 ```
 
-### 8. kintone Build Records Data
+### 9. kintone Build Records Data
 
 Convert a JSON string or array of objects into the `records_data` payload expected by `kintone_upsert_records`, automatically populating the `updateKey`.
 
@@ -297,7 +323,7 @@ Response example:
 }
 ```
 
-### 9. kintone Build Subtable Rows
+### 10. kintone Build Subtable Rows
 
 Transform a JSON string or array into the `value` array required by a kintone subtable field.
 
@@ -333,7 +359,7 @@ You can also submit an array directly:
 }
 ```
 
-### 10. kintone Download File
+### 11. kintone Download File
 
 #### 1. Download a file from kintone by specifying the file key
 
@@ -351,7 +377,7 @@ You can also submit an array directly:
 2. Check the attachment field in the response (for example: `"Attachment": [{"fileKey": "xxxxxxxx"}]`).
 3. Pass the `fileKey` value to the `file_key` parameter of this tool.
 
-### 11. kintone Upload File
+### 12. kintone Upload File
 
 #### 1. Upload attachments and obtain file keys
 

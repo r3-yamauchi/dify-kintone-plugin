@@ -1,7 +1,7 @@
 # kintone_integration_unofficial
 
 **Author:** r3-yamauchi
-**Version:** 0.1.4
+**Version:** 0.1.5
 **Type:** tool
 
 ## Description
@@ -20,6 +20,7 @@
 - kintone_add_record向け`record_data`構文のリファレンスを取得
 - kintone_add_record向け`record_data`の内容を検証
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
+- kintoneレコードのコメント欄へ（メンション付きで）投稿
 - kintoneのドメインとアプリIDを指定して複数レコードを一括追加・更新（upsert）
 - JSON文字列または配列からupdateKey付きのupsert用`records_data`を生成
 - JSON文字列または配列からkintoneテーブル(SUBTABLE)行構造を生成
@@ -196,7 +197,33 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 `kintone_add_record` で利用する `record_data` のJSON構文ガイドを返します。引数は不要で、サンプル構造、フィールドタイプ別ルール、プラグイン内部のバリデーション仕様、よくあるエラーを含む文章を返します。
 
-### 7. kintone Upsert Records
+### 7. kintone Add Record Comment
+
+#### 1. レコードコメントを投稿する
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": 123,
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": 456,
+  "comment_text": "見積書を更新しました。ご確認ください。",
+  "mentions": "[{\"code\": \"sales-team\", \"type\": \"GROUP\"}]"
+}
+```
+
+`comment_text` には最大 10,000 文字までのテキストを指定できます。`mentions` は任意で、`[{"code":"user1","type":"USER"}]` のような JSON 配列を渡すと、コメントにメンションを追加できます。`type` には `USER` / `GROUP` / `ORGANIZATION` を指定でき、最大10件までメンション可能です。
+
+成功時には以下の情報が得られます。
+
+- 変数 `comment_id`: 追加されたコメントID
+- 変数 `response`: kintoneが返したJSON（作成者やタイムスタンプを含む）
+- `json` 出力: `comment_id`, `record_id`, `app_id`, `mentions_count`, `created_at` をまとめたサマリー
+- `text` 出力: 投稿結果のメッセージ
+
+任意パラメータ: `request_timeout`（秒）でコメント投稿APIのタイムアウトを変更できます（既定値10秒）。
+
+### 8. kintone Upsert Records
 
 #### 1. 複数のレコードを一度に追加する
 
@@ -260,7 +287,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 }
 ```
 
-### 8. kintone Build Records Data
+### 9. kintone Build Records Data
 
 JSON文字列または配列のオブジェクトから、`kintone_upsert_records` が期待する `records_data` を生成し、指定した `updateKey` を自動で付与します。
 
@@ -296,7 +323,7 @@ JSON文字列または配列のオブジェクトから、`kintone_upsert_record
 }
 ```
 
-### 9. kintone Build Subtable Rows
+### 10. kintone Build Subtable Rows
 
 JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールドが受け付ける `rows` 形式に変換します。
 
@@ -332,7 +359,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 }
 ```
 
-### 10. kintone Download File
+### 11. kintone Download File
 
 #### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
 
@@ -351,7 +378,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
 3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
-### 11. kintone Upload File
+### 12. kintone Upload File
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 

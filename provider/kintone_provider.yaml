@@ -52,6 +52,7 @@ credentials_for_provider:
 tools:
   - tools/kintone_query.yaml
   - tools/kintone_add_record.yaml
+  - tools/kintone_add_record_comment.yaml
   - tools/kintone_upsert_records.yaml
   - tools/kintone_download_file.yaml
   - tools/kintone_upload_file.yaml
