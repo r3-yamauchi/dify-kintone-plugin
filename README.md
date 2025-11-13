@@ -1,7 +1,7 @@
-# kintone_integration_unofficial
+# kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.5
+**Version:** 0.1.6
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -476,7 +476,7 @@ Optional parameter: specify `request_timeout` (seconds) to set the timeout for b
 
 ## Privacy Policy
 
-The **kintone_integration_unofficial** plugin respects user privacy and keeps the exchanged data limited to what is strictly necessary for each tool.
+The **kintone_integration** plugin respects user privacy and keeps the exchanged data limited to what is strictly necessary for each tool.
 
 ## Data Collection
 

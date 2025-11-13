@@ -1,6 +1,6 @@
 # Privacy
 
-The **kintone_integration_unofficial** plugin respects user privacy and keeps the exchanged data limited to what is strictly necessary for each tool.
+The **kintone_integration** plugin respects user privacy and keeps the exchanged data limited to what is strictly necessary for each tool.
 
 ## Data Collection
 

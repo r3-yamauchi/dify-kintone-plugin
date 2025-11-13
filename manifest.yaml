@@ -1,7 +1,7 @@
-version: 0.1.5
+version: 0.1.6
 type: plugin
 author: r3-yamauchi
-name: kintone_integration_unofficial
+name: kintone_integration
 label:
   en_US: "Unofficial plugin for reading and writing kintone records"
   ja_JP: "kintoneレコードを読み書きする非公式のプラグイン"
@@ -22,7 +22,7 @@ plugins:
   tools:
     - provider/kintone_provider.yaml
 meta:
-  version: 0.1.5
+  version: 0.1.6
   arch:
     - amd64
     - arm64
