@@ -81,13 +81,14 @@ class KintoneTool(Tool):
             output_mode = self._resolve_output_mode(tool_parameters.get("output_mode"))
         except ValueError:
             yield self.create_text_message(
-                "output_mode には 'text_only', 'json_stream', 'both' のいずれかを指定してください。"
+                "output_mode は「テキスト + JSON」,「テキストのみ」,「JSONをページごとに即時返却」,「フラット化したJSON」のいずれかを指定してください。"
             )
             return
 
         produce_text = output_mode in {"text_only", "both"}
         stream_json = output_mode == "json_stream"
-        collect_json = output_mode == "both"
+        collect_json = output_mode in {"both", "flattened_json"}
+        flatten_json = output_mode == "flattened_json"
 
         # ユーザー指定のlimitがある場合はそれを使用、なければデフォルト値
         limit = user_limit if user_limit is not None else 500
@@ -133,6 +134,7 @@ class KintoneTool(Tool):
 
         # ページネーション処理用の変数
         all_records = [] if collect_json else None
+        all_flattened_records = [] if flatten_json else None
         text_records: list[list[str]] | None = [] if produce_text else None
         total_records = 0
         page_count = 0
@@ -285,6 +287,9 @@ class KintoneTool(Tool):
                 page_count += 1
                 if collect_json and all_records is not None:
                     all_records.extend(records)
+                if flatten_json and all_flattened_records is not None:
+                    for record in records:
+                        all_flattened_records.append(self._flatten_record(record))
 
                 if produce_text and text_records is not None:
                     for record in records:
@@ -324,11 +329,11 @@ class KintoneTool(Tool):
                 if not should_paginate:
                     # ユーザーがlimitを指定した場合は1回だけ取得
                     break
-                        
+
                 # 取得したレコード数が指定したlimitより少ない場合、全てのレコードを取得完了
                 if len(records) < limit:
                     break
-                        
+
                 if use_record_id_paging:
                     continue
 
@@ -361,7 +366,14 @@ class KintoneTool(Tool):
                     "records": records_output,
                 }
                 yield self.create_json_message(json_payload)
-
+            elif output_mode == "flattened_json":
+                records_output = all_flattened_records or []
+                json_payload = {
+                    "summary": summary_payload,
+                    "records": records_output,
+                }
+                yield self.create_json_message(json_payload)
+                yield self.create_text_message(json.dumps(records_output, ensure_ascii=False))
             elif output_mode == "json_stream":
                 yield self.create_json_message({"summary": summary_payload})
 
@@ -431,7 +443,7 @@ class KintoneTool(Tool):
             return "both"
         if isinstance(raw_mode, str):
             normalized = raw_mode.strip().lower()
-            if normalized in {"text_only", "json_stream", "both"}:
+            if normalized in {"text_only", "json_stream", "both", "flattened_json"}:
                 return normalized
         raise ValueError("invalid output mode")
 
@@ -556,8 +568,22 @@ class KintoneTool(Tool):
 
         return f"{prefix} {suffix}".strip()
 
+    def _flatten_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        kintone レコードをフラットな辞書形式に変換する。
+        フィールドコードをキーとし、その値を直接持つ。
+        """
+        row = {}
+        for field_code, field_data in record.items():
+            # { "type": "...", "value": ... } → value だけ取り出す
+            if isinstance(field_data, dict) and "value" in field_data:
+                row[field_code] = field_data["value"]
+            else:
+                row[field_code] = field_data
+        return row
 
-def get_field_value(record: Dict[str, Any], field_name: str) -> str:
+
+def get_field_value(record: Dict[str, Any], field_name: str) -> Any:
     """
     kintone レコードから指定されたフィールドの値を取り出して返す関数。
 

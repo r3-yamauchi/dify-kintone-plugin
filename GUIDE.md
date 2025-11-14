@@ -31,7 +31,7 @@ You can create:
 Edit `manifest.yaml` to describe your plugin:
 
 ```yaml
-version: 0.1.6                  # Required: Plugin version
+version: 0.1.7                  # Required: Plugin version
 type: plugin                    # Required: plugin or bundle
 author: YourOrganization        # Required: Organization name
 label:                          # Required: Multi-language names

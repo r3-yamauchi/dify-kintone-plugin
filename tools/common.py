@@ -11,7 +11,7 @@ from typing import Any, Iterable, Mapping, MutableMapping, Sequence
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
-USER_AGENT = "dify-kintone-plugin/0.1.6"
+USER_AGENT = "dify-kintone-plugin/0.1.7"
 SENSITIVE_KEYS = {"kintone_api_token"}
 _MASKED = "***"
 

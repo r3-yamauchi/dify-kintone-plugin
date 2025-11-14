@@ -88,9 +88,9 @@ parameters:
       en_US: Output mode
       ja_JP: 出力モード
     human_description:
-      en_US: "Choose 'text_only', 'json_stream', or 'both' (default) to control how the tool returns results."
-      ja_JP: "結果の出力形式を 'text_only'（テキストのみ）、'json_stream'（JSONをページごとに即時返却）、'both'（従来通りのテキスト＋JSON）から選択します。"
-    llm_description: "Set to text_only, json_stream, or both (default) to control output format."
+      en_US: "Choose 'text_only', 'json_stream', 'flattened_json', or 'both' (default) to control how the tool returns results."
+      ja_JP: "結果の出力形式を「テキスト + JSON」,「テキストのみ」,「JSONをページごとに即時返却」,「フラット化したJSON」から選択します。"
+    llm_description: "Set to text_only, json_stream, flattened_json, or both (default) to control output format."
     form: llm
     options:
       - value: both
@@ -105,6 +105,10 @@ parameters:
         label:
           en_US: JSON only (stream)
           ja_JP: JSON only (stream)
+      - value: flattened_json
+        label:
+          en_US: Flattened JSON
+          ja_JP: フラット化したJSON
   - name: request_timeout
     type: number
     required: false

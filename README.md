@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.6
+**Version:** 0.1.7
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -9,6 +9,9 @@ English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/mai
 ## Description
 
 This is an **unofficial** plugin for interacting with [kintone](https://kintone.cybozu.co.jp/) apps. By using this plugin, you can easily access and manage the information stored in your kintone app.
+
+> ⚠️ **Note: This is an unofficial plugin**  
+> This plugin is not developed or maintained by Cybozu, the provider of kintone. It is a community-developed plugin created by independent developers. Use at your own discretion.
 
 The source code of this plugin is available in the [GitHub repository](https://github.com/r3-yamauchi/dify-kintone-plugin).
 

@@ -1,12 +1,15 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.6
+**Version:** 0.1.7
 **Type:** tool
 
 ## Description
 
 これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを読み書きしたり、添付ファイルをアップロード/ダウンロードする際に便利な機能を提供する、**非公式**の [Dify](https://dify.ai/jp) 用ツール・プラグインです。
+
+> ⚠️ **注意: このプラグインは非公式です**  
+> このプラグインは kintone の提供元である サイボウズ が開発・保守しているものではありません。コミュニティによって開発された非公式のプラグインです。ご利用は自己責任でお願いいたします。
 
 ソースコードを [GitHub リポジトリ](https://github.com/r3-yamauchi/dify-kintone-plugin) で公開しています。
 
