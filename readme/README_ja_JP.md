@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.7
+**Version:** 0.1.8
 **Type:** tool
 
 ## Description
@@ -20,6 +20,7 @@
 - kintoneのドメインとアプリIDを指定してレコードを取得
 - kintoneのドメインとアプリIDを指定してフィールド定義を取得
 - kintoneのクエリ構文仕様文字列を取得
+- kintone レコード配列 JSON をフラット化
 - kintone_add_record向け`record_data`構文のリファレンスを取得
 - kintone_add_record向け`record_data`の内容を検証
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
@@ -162,7 +163,90 @@ JSON:
 
 kintoneのクエリ構文に関する説明文書を返します。
 
-### 4. kintone Add Record
+### 4. kintone Flatten JSON
+
+`kintone_query` が返したレコード配列 JSON を扱いやすいフラットなオブジェクトに変換します。
+
+#### 1. レコード配列全体をフラット化する
+
+```json
+{
+  "records_json": [
+    {
+      "$id": {"value": "2"},
+      "TXT1": {"value": "えええ"},
+      "NUM1": {"value": "123"},
+      "TABLE1": {
+        "type": "SUBTABLE",
+        "value": [
+          {
+            "id": "166884",
+            "value": {
+              "TXT11": {"value": "おおお"},
+              "NUM2": {"value": "456"}
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+レスポンス（JSON とテキスト出力は同じ内容）:
+
+```json
+[
+  {
+    "$id": "2",
+    "NUM1": "123",
+    "TABLE1": [
+      { "id": "166884", "NUM2": "456", "TXT11": "おおお" }
+    ],
+    "TXT1": "えええ"
+  }
+]
+```
+
+#### 2. 特定のテーブル行だけを抽出し、フィールドを絞り込む
+
+```json
+{
+  "records_json": [
+    {
+      "$id": {"value": "2"},
+      "TXT1": {"value": "えええ"},
+      "NUM1": {"value": "123"},
+      "TABLE1": {
+        "type": "SUBTABLE",
+        "value": [
+          {
+            "id": "166884",
+            "value": {
+              "TXT11": {"value": "おおお"},
+              "NUM2": {"value": "456"}
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "subtable_field_code": "TABLE1",
+  "fields": "TXT1,NUM1,TXT11"
+}
+```
+
+レスポンス:
+
+```json
+[
+  { "TXT1": "えええ", "NUM1": "123", "TXT11": "おおお" }
+]
+```
+
+`subtable_field_code` を指定すると、そのテーブルの行のみが返り、`fields`（カンマ区切り）を指定すると指定したフィールドが出力に追加されます。
+
+### 5. kintone Add Record
 
 #### 1. レコードを 1件新規追加する
 
@@ -181,7 +265,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 任意パラメータ: `request_timeout`（秒）でAPIタイムアウトを変更できます。既定値は10秒です。
 
-### 5. kintone Validate Record Data
+### 6. kintone Validate Record Data
 
 `kintone_add_record` に渡すための `record_data` JSON 文字列を、アプリのフィールド定義に基づいて検証します。
 
@@ -196,11 +280,11 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 構造および型チェックを通過すると、整形済みの JSON をそのまま返します。検証に失敗した場合は、具体的なエラー内容をメッセージとして返します。
 
-### 6. kintone Record Data Docs
+### 7. kintone Record Data Docs
 
 `kintone_add_record` で利用する `record_data` のJSON構文ガイドを返します。引数は不要で、サンプル構造、フィールドタイプ別ルール、プラグイン内部のバリデーション仕様、よくあるエラーを含む文章を返します。
 
-### 7. kintone Add Record Comment
+### 8. kintone Add Record Comment
 
 #### 1. レコードコメントを投稿する
 
@@ -226,7 +310,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 任意パラメータ: `request_timeout`（秒）でコメント投稿APIのタイムアウトを変更できます（既定値10秒）。
 
-### 8. kintone Upsert Records
+### 9. kintone Upsert Records
 
 #### 1. 複数のレコードを一度に追加する
 
@@ -290,7 +374,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 }
 ```
 
-### 9. kintone Build Records Data
+### 10. kintone Build Records Data
 
 JSON文字列または配列のオブジェクトから、`kintone_upsert_records` が期待する `records_data` を生成し、指定した `updateKey` を自動で付与します。
 
@@ -326,7 +410,7 @@ JSON文字列または配列のオブジェクトから、`kintone_upsert_record
 }
 ```
 
-### 10. kintone Build Subtable Rows
+### 11. kintone Build Subtable Rows
 
 JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールドが受け付ける `rows` 形式に変換します。
 
@@ -362,7 +446,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 }
 ```
 
-### 11. kintone Download File
+### 12. kintone Download File
 
 #### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
 
@@ -381,7 +465,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
 3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
-### 12. kintone Upload File
+### 13. kintone Upload File
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 

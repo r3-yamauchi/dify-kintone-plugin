@@ -7,7 +7,7 @@ why: kintone APIを通じたレコード取得と結果整形を担う
 import re
 import json
 from collections.abc import Generator
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from requests.exceptions import RequestException, Timeout, HTTPError
@@ -575,12 +575,62 @@ class KintoneTool(Tool):
         """
         row = {}
         for field_code, field_data in record.items():
-            # { "type": "...", "value": ... } → value だけ取り出す
-            if isinstance(field_data, dict) and "value" in field_data:
-                row[field_code] = field_data["value"]
-            else:
-                row[field_code] = field_data
+            row[field_code] = self._flatten_field(field_data)
         return row
+
+    def _flatten_field(self, field_data: Any) -> Any:
+        """Flatten SUBTABLE構造を含むフィールドを標準化する。"""
+        if self._is_subtable_dict(field_data):
+            return self._flatten_subtable(field_data)
+
+        extracted = self._extract_value(field_data)
+        if self._looks_like_subtable_rows(extracted):
+            return self._flatten_subtable(extracted)
+        return extracted
+
+    def _flatten_subtable(self, field_data: Any) -> Any:
+        """SUBTABLEの value 配列を [{id, ...}] 形式へ展開する。"""
+        if isinstance(field_data, dict):
+            rows = field_data.get("value", [])
+        else:
+            rows = field_data
+
+        if not isinstance(rows, list):
+            return field_data
+
+        flattened_rows: List[Dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                flattened_rows.append(row)
+                continue
+
+            flattened_row: Dict[str, Any] = {}
+            for key, value in row.items():
+                if key == "value" and isinstance(value, dict):
+                    for sub_field_code, sub_field_data in value.items():
+                        flattened_row[sub_field_code] = self._extract_value(
+                            sub_field_data
+                        )
+                else:
+                    flattened_row[key] = value
+            flattened_rows.append(flattened_row)
+        return flattened_rows
+
+    @staticmethod
+    def _extract_value(field_data: Any) -> Any:
+        if isinstance(field_data, dict) and "value" in field_data:
+            return field_data["value"]
+        return field_data
+
+    @staticmethod
+    def _is_subtable_dict(field_data: Any) -> bool:
+        return isinstance(field_data, dict) and field_data.get("type") == "SUBTABLE"
+
+    @staticmethod
+    def _looks_like_subtable_rows(value: Any) -> bool:
+        if not isinstance(value, list):
+            return False
+        return any(isinstance(row, dict) and "value" in row for row in value)
 
 
 def get_field_value(record: Dict[str, Any], field_name: str) -> Any:

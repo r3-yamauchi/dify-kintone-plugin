@@ -1,0 +1,79 @@
+identity:
+  name: kintone_flatten_json
+  author: r3-yamauchi
+  label:
+    en_US: kintone Flatten JSON
+    ja_JP: "JSONフラット化"
+    zh_Hans: kintone JSON 扁平化
+    pt_BR: kintone Flatten JSON
+description:
+  human:
+    en_US: Converts kintone record array (JSON format) into a flattened JSON object array.
+    ja_JP: "kintoneのレコード配列（JSON形式）を、扱いやすいフラットなJSONオブジェクトの配列に変換します。"
+    zh_Hans: 将 kintone 记录数组（JSON）转换为易于处理的扁平 JSON 对象数组。
+    pt_BR: Converte o array de registros do kintone (JSON) em um array de objetos JSON achatados.
+  llm: Converts kintone record array (JSON format) into a flattened JSON object array.
+parameters:
+  - name: records_json
+    type: array
+    items:
+      type: object
+    required: true
+    label:
+      en_US: kintone Records JSON
+      ja_JP: "kintoneレコードJSON"
+      zh_Hans: "kintone 记录 JSON"
+      pt_BR: "JSON de Registros do kintone"
+    human_description:
+      en_US: |
+        JSON array object of kintone records to be flattened (pass the array itself, not a quoted string).
+        Wrappers such as { "json": [{ "records": [...] }] } or [ { "records": [...] } ] are also supported.
+      ja_JP: |
+        フラット化対象となるkintoneレコードのJSON配列（文字列ではなくオブジェクト）をそのまま渡してください。
+        {"json":[{"records":[...]}]} や [{"records":[...]}] のような records キー付きのラッパー構造にも対応しています。
+      zh_Hans: |
+        传入需要扁平化的 kintone 记录 JSON 数组对象（不要再加引号）。
+        也支持 { "json": [{ "records": [...] }] }、[{"records":[...]}] 等包含 records 键的包装结构。
+      pt_BR: |
+        Forneça o array JSON de registros do kintone (objeto) a ser achatado, sem aspas.
+        Estruturas que contenham a chave records (ex.: { "json": [{ "records": [...] }] } ou [ { "records": [...] } ]) também são aceitas.
+    llm_description: JSON array object containing kintone records to be flattened (wrappers that expose a `records` key are also accepted).
+    form: llm
+  - name: fields
+    type: string
+    required: false
+    label:
+      en_US: Fields
+      ja_JP: "出力フィールド"
+      zh_Hans: 输出字段
+      pt_BR: Campos
+    human_description:
+      en_US: (Optional) Comma-separated field codes to include in the output.
+      ja_JP: "カンマ区切りで指定したフィールドのみを出力します。"
+      zh_Hans: （可选）以逗号分隔的字段代码，仅输出这些字段。
+      pt_BR: (Opcional) Lista de campos separada por vírgulas a manter no resultado.
+    llm_description: Optional comma-separated list of field codes to keep in the output.
+    form: llm
+  - name: subtable_field_code
+    type: string
+    required: false
+    label:
+      en_US: Subtable Field Code
+      ja_JP: "テーブル(SUBTABLE)のフィールドコード"
+      zh_Hans: 子表字段代码
+      pt_BR: Código do Campo de Subtabela
+    human_description:
+      en_US: (Optional) When set, only the rows of this SUBTABLE field will be returned as flattened JSON objects.
+      ja_JP: "指定したテーブルをフラットなJSON配列として返します。"
+      zh_Hans: （可选）仅返回该 SUBTABLE 字段的行，并以扁平 JSON 对象表示。
+      pt_BR: (Opcional) Retorna apenas as linhas dessa SUBTABLE já achatadas.
+    llm_description: Optional SUBTABLE field code whose rows should be returned as a flattened array.
+    form: llm
+outputs:
+  - name: result
+    type: string
+    description: 変換後のフラット化されたJSON文字列
+extra:
+  python:
+    source: tools/kintone_flatten_json.py
+    class: KintoneFlattenJsonTool

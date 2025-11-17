@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.7
+**Version:** 0.1.8
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -22,6 +22,7 @@ The source code of this plugin is available in the [GitHub repository](https://g
 - Retrieve records by specifying the kintone domain and app ID
 - Fetch field definitions by specifying the kintone domain and app ID
 - Obtain the reference text for the kintone query syntax
+- Flatten raw kintone record JSON with the `kintone_flatten_json` tool.
 - Retrieve the `record_data` syntax reference for `kintone_add_record`
 - Validate `record_data` with a dedicated tool before adding records
 - Add a single record by specifying the kintone domain and app ID
@@ -163,7 +164,90 @@ When `detail_level` is `true`, the tool returns the complete field definition as
 
 Returns documentation explaining the kintone query syntax.
 
-### 4. kintone Add Record
+### 4. kintone Flatten JSON
+
+Convert the raw record array (typically the JSON returned by `kintone_query`) into flattened objects.
+
+#### 1. Flatten the entire record array
+
+```json
+{
+  "records_json": [
+    {
+      "$id": {"value": "2"},
+      "TXT1": {"value": "eee"},
+      "NUM1": {"value": "123"},
+      "TABLE1": {
+        "type": "SUBTABLE",
+        "value": [
+          {
+            "id": "166884",
+            "value": {
+              "TXT11": {"value": "ooo"},
+              "NUM2": {"value": "456"}
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+Response (text output mirrors the JSON message):
+
+```json
+[
+  {
+    "$id": "2",
+    "NUM1": "123",
+    "TABLE1": [
+      { "id": "166884", "NUM2": "456", "TXT11": "ooo" }
+    ],
+    "TXT1": "eee"
+  }
+]
+```
+
+#### 2. Extract a specific subtable with a field filter
+
+```json
+{
+  "records_json": [
+    {
+      "$id": {"value": "2"},
+      "TXT1": {"value": "eee"},
+      "NUM1": {"value": "123"},
+      "TABLE1": {
+        "type": "SUBTABLE",
+        "value": [
+          {
+            "id": "166884",
+            "value": {
+              "TXT11": {"value": "ooo"},
+              "NUM2": {"value": "456"}
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "subtable_field_code": "TABLE1",
+  "fields": "TXT1,NUM1,TXT11"
+}
+```
+
+Response:
+
+```json
+[
+  { "TXT1": "eee", "NUM1": "123", "TXT11": "ooo" }
+]
+```
+
+`subtable_field_code` limits the output to the specified SUBTABLE rows, while `fields` (comma separated) keeps only the requested field codes and copies parent-level fields into each subtable row.
+
+### 5. kintone Add Record
 
 #### 1. Add a single new record
 
@@ -182,7 +266,7 @@ Returns documentation explaining the kintone query syntax.
 
 Optional parameter: specify `request_timeout` (seconds) to adjust the API timeout (default 10 seconds).
 
-### 5. kintone Validate Record Data
+### 6. kintone Validate Record Data
 
 Validate the `record_data` JSON string that will be passed to `kintone_add_record`, based on the field definitions of the app.
 
@@ -197,11 +281,11 @@ Validate the `record_data` JSON string that will be passed to `kintone_add_recor
 
 If the structure and types pass validation, the tool returns formatted JSON that can be reused in the subsequent `kintone_add_record` call. If validation fails, the tool returns a message describing the errors.
 
-### 6. kintone Record Data Docs
+### 7. kintone Record Data Docs
 
 Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. No parameters are required. The response contains sample structures, rules by field type, the plugin’s internal validation rules, and a list of common errors.
 
-### 7. kintone Add Record Comment
+### 8. kintone Add Record Comment
 
 #### 1. Post a comment to an existing record
 
@@ -226,7 +310,7 @@ When the call succeeds, the response includes:
 
 Optional parameter: `request_timeout` (seconds) to override the default 10-second timeout.
 
-### 8. kintone Upsert Records
+### 9. kintone Upsert Records
 
 #### 1. Add multiple records at once
 
@@ -290,7 +374,7 @@ Optional parameter: `request_timeout` (seconds) to override the default 10-secon
 }
 ```
 
-### 9. kintone Build Records Data
+### 10. kintone Build Records Data
 
 Convert a JSON string or array of objects into the `records_data` payload expected by `kintone_upsert_records`, automatically populating the `updateKey`.
 
@@ -326,7 +410,7 @@ Response example:
 }
 ```
 
-### 10. kintone Build Subtable Rows
+### 11. kintone Build Subtable Rows
 
 Transform a JSON string or array into the `value` array required by a kintone subtable field.
 
@@ -362,7 +446,7 @@ You can also submit an array directly:
 }
 ```
 
-### 11. kintone Download File
+### 12. kintone Download File
 
 #### 1. Download a file from kintone by specifying the file key
 
@@ -380,7 +464,7 @@ You can also submit an array directly:
 2. Check the attachment field in the response (for example: `"Attachment": [{"fileKey": "xxxxxxxx"}]`).
 3. Pass the `fileKey` value to the `file_key` parameter of this tool.
 
-### 12. kintone Upload File
+### 13. kintone Upload File
 
 #### 1. Upload attachments and obtain file keys
 

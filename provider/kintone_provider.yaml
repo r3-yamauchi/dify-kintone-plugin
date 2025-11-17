@@ -51,6 +51,7 @@ credentials_for_provider:
       ja_JP: "your-api-token1, api-token2, api-token3"
 tools:
   - tools/kintone_query.yaml
+  - tools/kintone_flatten_json.yaml
   - tools/kintone_add_record.yaml
   - tools/kintone_add_record_comment.yaml
   - tools/kintone_upsert_records.yaml
