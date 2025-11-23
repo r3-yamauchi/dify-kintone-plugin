@@ -9,7 +9,7 @@ identity:
 description:
   human:
     en_US: Build kintone subtable rows from JSON string or array input
-    ja_JP: JSON文字列または配列入力からkintoneテーブル(SUBTABLE)行を生成します
+    ja_JP: "JSONや配列の内容をkintoneのテーブル(SUBTABLE)行へ変換します"
     zh_Hans: 通过 JSON 字符串或数组输入生成 kintone 子表行
     pt_BR: Gera linhas de sub-tabela do kintone a partir de string JSON ou array
   llm: Convert JSON string or array to kintone subtable rows with value-wrapped fields

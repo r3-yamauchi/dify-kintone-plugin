@@ -6,14 +6,17 @@ why: ドメイン正規化やタイムアウト検証などの重複処理を一
 
 from __future__ import annotations
 
+import ast
+import json
 from typing import Any, Iterable, Mapping, MutableMapping, Sequence
 
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
-USER_AGENT = "dify-kintone-plugin/0.1.8"
+USER_AGENT = "dify-kintone-plugin/0.1.9"
 SENSITIVE_KEYS = {"kintone_api_token"}
 _MASKED = "***"
+MAX_LOG_PAYLOAD_CHARS = 4000
 
 
 def normalize_domain(raw_domain: Any) -> str:
@@ -111,6 +114,93 @@ def resolve_timeout(value: Any, default: float) -> float:
     return timeout
 
 
+def parse_single_record_data(payload: Any) -> MutableMapping[str, Any]:
+    """単一レコードのrecord_dataを辞書に正規化する。
+
+    - dictをそのまま許容
+    - JSON文字列をパース（失敗時はast.literal_evalでPythonリテラルも許容）
+    - ラッパー形式 {"record_data": {...}} を認識して中身を取り出す
+    """
+
+    if isinstance(payload, MutableMapping):
+        data = payload
+    elif isinstance(payload, str):
+        text = payload.strip()
+        if not text:
+            raise ValueError("record_data が有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            try:
+                data = ast.literal_eval(text)
+            except (ValueError, SyntaxError):
+                raise ValueError("record_data が有効なJSON形式ではありません。正しいJSON形式で入力してください。") from None
+    else:
+        raise ValueError("record_data が有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+
+    if not isinstance(data, MutableMapping):
+        raise ValueError("record_data が有効なJSON形式ではありません。正しいJSON形式で入力してください。")
+
+    # record_data のラッパー形式を許容する
+    if "record_data" in data and isinstance(data["record_data"], MutableMapping):
+        data = data["record_data"]
+
+    return _to_json_compatible(data)
+
+
+def validate_record_structure(record_data: Mapping[str, Any]) -> list[str]:
+    """単一レコードデータの構造を検証し、問題があればエラー文言を返す。"""
+
+    errors: list[str] = []
+
+    if not isinstance(record_data, Mapping):
+        errors.append("record_data はオブジェクトである必要があります")
+        return errors
+
+    if not record_data:
+        errors.append("record_data にフィールドがありません")
+        return errors
+
+    for field_code, field_data in record_data.items():
+        if not isinstance(field_code, str):
+            errors.append(f"フィールドコードは文字列で指定してください: {field_code!r}")
+            continue
+
+        if not isinstance(field_data, Mapping):
+            errors.append(f"フィールド '{field_code}' のデータはオブジェクトで指定してください")
+            continue
+
+        if "value" not in field_data:
+            errors.append(f"フィールド '{field_code}' に 'value' キーがありません")
+
+    return errors
+
+
+def _to_json_compatible(value: Any) -> Any:
+    """kintone API に送れる JSON 互換オブジェクトへ再帰的に変換する。
+
+    - None は空文字列 "" に置換
+    - dict / list / tuple を再帰処理
+    - それ以外で JSON にできない型はエラー
+    """
+
+    if value is None:
+        return ""
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Mapping):
+        converted: dict[str, Any] = {}
+        for k, v in value.items():
+            if not isinstance(k, str):
+                raise ValueError("record_data のキーは文字列である必要があります。")
+            converted[k] = _to_json_compatible(v)
+        return converted
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_to_json_compatible(item) for item in value]
+
+    raise ValueError("record_data にJSONへ変換できない値が含まれています。")
+
+
 def build_headers(
     api_token: str,
     *,
@@ -162,7 +252,13 @@ def log_parameters(tool: Tool, parameters: Mapping[str, Any]) -> ToolInvokeMessa
 def log_response(tool: Tool, label: str, payload: Mapping[str, Any]) -> ToolInvokeMessage:
     """レスポンス情報をログとして出力する。"""
 
-    return tool.create_log_message(label=label, data=sanitize_for_logging(payload))
+    sanitized = sanitize_for_logging(payload)
+    text = json.dumps(sanitized, ensure_ascii=False)
+    if len(text) > MAX_LOG_PAYLOAD_CHARS:
+        suffix = f"...(truncated,len={len(text)})"
+        head = MAX_LOG_PAYLOAD_CHARS - len(suffix)
+        text = text[: max(head, 0)] + suffix
+    return tool.create_log_message(label=label, data={"payload": text})
 
 
 def ensure_user_agent(headers: MutableMapping[str, str]) -> MutableMapping[str, str]:

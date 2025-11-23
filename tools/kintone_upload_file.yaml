@@ -11,12 +11,7 @@ description:
     en_US: Upload a file to kintone and receive its file key for later use
     zh_Hans: 将文件上传到kintone并获取文件密钥以便后续使用
     pt_BR: Envie um arquivo para o kintone e obtenha a fileKey para uso posterior
-    ja_JP: |-
-      kintoneへファイルをアップロードし、後続処理で利用できるfileKeyを取得します
-
-      【利用手順】
-      1. Difyでファイルを添付してこのツールを実行します
-      2. 応答で返るfileKeyをkintone_add_record等の添付ファイルフィールドに指定します
+    ja_JP: "kintoneへファイルをアップロードし、fileKeyを取得します"
   llm: Upload a file to kintone and return the resulting fileKey identifier
 parameters:
   - name: kintone_domain

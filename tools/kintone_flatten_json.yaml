@@ -3,7 +3,7 @@ identity:
   author: r3-yamauchi
   label:
     en_US: kintone Flatten JSON
-    ja_JP: "JSONフラット化"
+    ja_JP: "JSON フラット化"
     zh_Hans: kintone JSON 扁平化
     pt_BR: kintone Flatten JSON
 description:

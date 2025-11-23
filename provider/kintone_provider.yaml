@@ -54,6 +54,7 @@ tools:
   - tools/kintone_flatten_json.yaml
   - tools/kintone_add_record.yaml
   - tools/kintone_add_record_comment.yaml
+  - tools/kintone_update_record.yaml
   - tools/kintone_upsert_records.yaml
   - tools/kintone_download_file.yaml
   - tools/kintone_upload_file.yaml

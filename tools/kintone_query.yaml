@@ -30,15 +30,15 @@ parameters:
     form: llm
 
   - name: kintone_app_id
-    type: number
+    type: string
     required: true
     label:
       en_US: "kintone App ID"
       ja_JP: "kintone アプリID"
     human_description:
-      en_US: "The ID of your kintone application"
-      ja_JP: "使用するkintoneアプリのID"
-    llm_description: ID of the kintone app to query
+      en_US: "The ID of your kintone application. Accepts either a number or a numeric string; must represent a positive integer."
+      ja_JP: "対象アプリのアプリID"
+    llm_description: "ID of the kintone app to query (number or numeric string); must be a positive integer."
     form: llm
 
   - name: kintone_api_token

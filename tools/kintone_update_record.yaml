@@ -1,0 +1,120 @@
+identity:
+  name: kintone_update_record
+  author: r3-yamauchi
+  label:
+    en_US: kintone Update Record
+    ja_JP: kintone レコード更新
+    zh_Hans: kintone 更新记录
+    pt_BR: kintone Atualizar Registro
+description:
+  human:
+    en_US: Update a single existing kintone record (no upsert)
+    ja_JP: 既存のkintoneレコードを1件更新
+    zh_Hans: 更新单个已存在的 kintone 记录（不做 upsert）
+    pt_BR: Atualize um registro kintone existente (sem upsert)
+  llm: Update one existing kintone record by record_id; upsert is not performed.
+parameters:
+  - name: kintone_domain
+    type: string
+    required: false
+    label:
+      en_US: "kintone Domain"
+      ja_JP: "cybozu.com ドメイン"
+    human_description:
+      en_US: "Portion of the kintone URL after https:// (e.g., your-subdomain.cybozu.com). Falls back to provider credentials when omitted."
+      ja_JP: "kintoneのURLのうち https:// より後ろの部分（例: your-subdomain.cybozu.com）。未入力時はプロバイダー設定の値を使います。"
+    llm_description: kintone domain that hosts the target app
+    placeholder:
+      en_US: "your-subdomain.cybozu.com"
+      ja_JP: "your-subdomain.cybozu.com"
+    form: llm
+
+  - name: kintone_app_id
+    type: string
+    required: true
+    label:
+      en_US: "kintone App ID"
+      ja_JP: "kintone アプリID"
+    human_description:
+      en_US: "ID of the kintone app. Accepts number or numeric string; must be a positive integer."
+      ja_JP: "対象アプリのアプリID"
+    llm_description: "Numeric kintone app ID (number or numeric string); must be positive."
+    form: llm
+
+  - name: kintone_api_token
+    type: secret-input
+    required: false
+    label:
+      en_US: "kintone API Token"
+      ja_JP: "kintone APIトークン"
+    human_description:
+      en_US: "API token with update permissions for the target app. Falls back to provider credentials when omitted."
+      ja_JP: "対象アプリの更新権限を持つAPIトークン。省略時はプロバイダー設定の値を利用します。"
+    llm_description: API token that allows updating records in the target app
+    form: llm
+
+  - name: record_id
+    type: string
+    required: false
+    label:
+      en_US: "Record ID"
+      ja_JP: "レコードID"
+    human_description:
+      en_US: "Record ID (numeric value in the record URL). Accepts number or numeric string; must be a positive integer. Provide either record_id or updateKey."
+      ja_JP: "更新対象のレコードID。record_id または updateKey のいずれかを指定してください。"
+    llm_description: "kintone record ID to update (number or numeric string); must be positive. Specify record_id or updateKey."
+    form: llm
+
+  - name: updateKey
+    type: string
+    required: false
+    label:
+      en_US: "Update Key"
+      ja_JP: "更新キー (updateKey)"
+    human_description:
+      en_US: "Alternative to record_id. Accepts a JSON object with 'field' and 'value' (e.g., {\"field\":\"顧客ID\",\"value\":\"CUST-001\"}) or just the field code string (e.g., \"顧客ID\") together with updateKeyValue."
+      ja_JP: "record_id の代わりに指定できます。'field' と 'value' を持つJSONオブジェクト形式（例: {\"field\":\"顧客ID\",\"value\":\"CUST-001\"}）による指定方法に加え、フィールドコード文字列のみ（例: \"顧客ID\"）と updateKeyValue の組み合わせによる指定もできます。"
+    llm_description: "Optional updateKey. Use a JSON object with field/value or provide only the field code string and supply the value via updateKeyValue."
+    form: llm
+
+  - name: updateKeyValue
+    type: string
+    required: false
+    label:
+      en_US: "Update Key Value"
+      ja_JP: "更新キーの値 (updateKeyValue)"
+    human_description:
+      en_US: "Value for updateKey when you provide only the field code string in updateKey (e.g., updateKey: \"顧客ID\", updateKeyValue: \"CUST-001\")."
+      ja_JP: "updateKey にフィールドコードのみを文字列で指定する場合の値（例: updateKey欄に \"顧客ID\" , updateKeyValue欄に \"CUST-001\" のように分けて入力可）"
+    llm_description: "Value to pair with updateKey when updateKey is just a field code string."
+    form: llm
+
+  - name: record_data
+    type: string
+    required: true
+    label:
+      en_US: "Record Data"
+      ja_JP: "レコードデータ"
+    human_description:
+      en_US: "JSON format data for the record to update (e.g., {\"field_code\": {\"value\": \"new value\"}})."
+      ja_JP: "更新するフィールドデータ（例: {\"フィールドコード\": {\"value\": \"新しい値\"}}）"
+    llm_description: JSON payload for the fields to update in the target record
+    form: llm
+
+  - name: request_timeout
+    type: number
+    required: false
+    default: 30
+    label:
+      en_US: "Request Timeout (seconds)"
+      ja_JP: "リクエストタイムアウト（秒）"
+    human_description:
+      en_US: "Timeout in seconds for the kintone API request. Default is 30 seconds."
+      ja_JP: "kintone APIリクエストのタイムアウト秒数。既定値は30秒です。"
+    llm_description: Timeout in seconds for the API call; defaults to 30
+    form: llm
+
+extra:
+  python:
+    source: tools/kintone_update_record.py
+    class: KintoneUpdateRecordTool

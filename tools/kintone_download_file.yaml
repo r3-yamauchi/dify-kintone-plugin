@@ -11,13 +11,7 @@ description:
     en_US: Download a file from kintone using file key
     zh_Hans: 使用文件密钥从kintone下载文件
     pt_BR: Baixe um arquivo do kintone usando a chave do arquivo
-    ja_JP: |-
-      kintoneからファイルをダウンロードします
-
-      【file_keyの取得方法】
-      1. kintone_queryツールを使用してレコードを取得します
-      2. 添付ファイルフィールドの値を確認します（例: "添付ファイル": [{"fileKey": "xxxxxxxx"}]）
-      3. fileKeyの値をこのツールのfile_keyパラメータに指定します
+    ja_JP: "fileKeyを指定してkintoneからファイルをダウンロードします"
   llm: Download a file from kintone using the file key identifier
 parameters:
   - name: kintone_domain

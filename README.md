@@ -1,21 +1,19 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.8
+**Version:** 0.1.9
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
 
 ## Description
 
-This is an **unofficial** plugin for interacting with [kintone](https://kintone.cybozu.co.jp/) apps. By using this plugin, you can easily access and manage the information stored in your kintone app.
+This is an **unofficial** plugin for interacting with [kintone](https://kintone.cybozu.co.jp/) apps. By using this plugin, you can easily access and manage the information stored in your kintone app. The source code of this plugin is available in the [GitHub repository](https://github.com/r3-yamauchi/dify-kintone-plugin).
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/r3-yamauchi/dify-kintone-plugin)
 
 > ⚠️ **Note: This is an unofficial plugin**  
 > This plugin is not developed or maintained by Cybozu, the provider of kintone. It is a community-developed plugin created by independent developers. Use at your own discretion.
-
-The source code of this plugin is available in the [GitHub repository](https://github.com/r3-yamauchi/dify-kintone-plugin).
-
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/r3-yamauchi/dify-kintone-plugin)
 
 ## Features
 
@@ -23,9 +21,9 @@ The source code of this plugin is available in the [GitHub repository](https://g
 - Fetch field definitions by specifying the kintone domain and app ID
 - Obtain the reference text for the kintone query syntax
 - Flatten raw kintone record JSON with the `kintone_flatten_json` tool.
-- Retrieve the `record_data` syntax reference for `kintone_add_record`
-- Validate `record_data` with a dedicated tool before adding records
 - Add a single record by specifying the kintone domain and app ID
+- Retrieve the `record_data` syntax reference
+- Validate `record_data` with a dedicated tool before adding records
 - Post comments to an existing record with optional mentions
 - Upsert (bulk insert/update) multiple records by specifying the kintone domain and app ID
 - Build kintone upsert `records_data` payloads from a JSON string or array input with automatic `updateKey`
@@ -54,7 +52,7 @@ The source code of this plugin is available in the [GitHub repository](https://g
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
@@ -64,7 +62,7 @@ The source code of this plugin is available in the [GitHub repository](https://g
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "query": "field1 >= 100"
 }
@@ -75,9 +73,9 @@ The source code of this plugin is available in the [GitHub repository](https://g
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
-  "fields": "field1, field2, field3"
+  "fields": "field1,field2,field3"
 }
 ```
 
@@ -87,9 +85,10 @@ You can also use the optional `output_mode` parameter to choose the response for
 
 | Value | Behavior |
 | --- | --- |
-| `text_only` | Returns only the text output. |
-| `json_stream` | Streams the JSON payload page by page without the text output. |
-| `both` (default) | Returns both the text summary and the aggregated JSON payload. |
+| `both` (default) | Returns text and JSON together. |
+| `text_only` | Returns only text. |
+| `json_stream` | Streams JSON page-by-page (no text). |
+| `flattened_json` | Returns kintone records flattened into an array of plain objects. |
 
 A typical response looks like:
 
@@ -138,7 +137,7 @@ JSON:
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
@@ -150,7 +149,7 @@ Returns basic information such as field codes and field types. Information about
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "detail_level": true
 }
@@ -254,7 +253,7 @@ Response:
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": {
     "text_field": {"value": "Sample text"},
@@ -266,35 +265,88 @@ Response:
 
 Optional parameter: specify `request_timeout` (seconds) to adjust the API timeout (default 10 seconds).
 
-### 6. kintone Validate Record Data
+### 6. kintone Update Record
 
-Validate the `record_data` JSON string that will be passed to `kintone_add_record`, based on the field definitions of the app.
+Update one existing record. If the target record does not exist, the call fails.  
+If you need upsert behavior (insert when not found), use `kintone_upsert_records` instead.
+
+There are three example patterns; in all of them, `record_data` uses the same structure as `kintone_add_record` and only the specified fields are updated.
+
+1) When you specify `record_id`
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "45",
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+2) When you specify `updateKey` in `{ "field": "...", "value": "..." }` format
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "updateKey": { "field": "顧客ID", "value": "CUST-001" },
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+3) When you provide only the field code in `updateKey` and the value via `updateKeyValue`
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "updateKey": "顧客ID",
+  "updateKeyValue": "CUST-001",
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+- Specify either `record_id` or `updateKey`. For `updateKey`, you may use pattern 2) or 3).
+Optional parameter: `request_timeout` (seconds) sets the timeout for the update request (default 30 seconds).
+
+### 7. kintone Record Data Docs
+
+Returns a JSON syntax guide for `record_data` used by `kintone_add_record` or `kintone_update_record`. No parameters are required. The response contains sample structures, rules by field type, validation rules, and common errors.
+
+### 8. kintone Validate Record Data
+
+Validates the `record_data` JSON string you will pass to `kintone_add_record` or `kintone_update_record`, against the field definitions of the app.
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": "{\"text_field\": {\"value\": \"Sample text\"}, \"number_field\": {\"value\": 100}}"
 }
 ```
 
-If the structure and types pass validation, the tool returns formatted JSON that can be reused in the subsequent `kintone_add_record` call. If validation fails, the tool returns a message describing the errors.
+If the structure and types pass validation, the tool returns the formatted JSON as-is. If validation fails—for example, when a field specified in `record_data` does not exist in the target app—the tool returns a message with detailed error information.
 
-### 7. kintone Record Data Docs
-
-Returns a JSON syntax guide for the `record_data` used by `kintone_add_record`. No parameters are required. The response contains sample structures, rules by field type, the plugin’s internal validation rules, and a list of common errors.
-
-### 8. kintone Add Record Comment
+### 9. kintone Add Record Comment
 
 #### 1. Post a comment to an existing record
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
-  "record_id": 456,
+  "record_id": "456",
   "comment_text": "Please review the updated quote.",
   "mentions": "[{\"code\": \"sales-team\", \"type\": \"GROUP\"}]"
 }
@@ -304,20 +356,19 @@ The tool posts plain-text comments to the record’s discussion thread. `comment
 
 When the call succeeds, the response includes:
 
-- `comment_id` variable pointing to the newly created comment
 - `response` variable with the raw JSON from kintone (creator info, timestamps, etc.)
 - `json` message summarizing `comment_id`, `record_id`, `app_id`, `mentions_count`, and `created_at`
 
 Optional parameter: `request_timeout` (seconds) to override the default 10-second timeout.
 
-### 9. kintone Upsert Records
+### 10. kintone Upsert Records
 
 #### 1. Add multiple records at once
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
@@ -345,7 +396,7 @@ Optional parameter: `request_timeout` (seconds) to override the default 10-secon
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
@@ -374,7 +425,7 @@ Optional parameter: `request_timeout` (seconds) to override the default 10-secon
 }
 ```
 
-### 10. kintone Build Records Data
+### 11. kintone Build Records Data
 
 Convert a JSON string or array of objects into the `records_data` payload expected by `kintone_upsert_records`, automatically populating the `updateKey`.
 
@@ -410,7 +461,7 @@ Response example:
 }
 ```
 
-### 11. kintone Build Subtable Rows
+### 12. kintone Build Subtable Rows
 
 Transform a JSON string or array into the `value` array required by a kintone subtable field.
 
@@ -446,7 +497,7 @@ You can also submit an array directly:
 }
 ```
 
-### 12. kintone Download File
+### 13. kintone Download File
 
 #### 1. Download a file from kintone by specifying the file key
 
@@ -464,7 +515,7 @@ You can also submit an array directly:
 2. Check the attachment field in the response (for example: `"Attachment": [{"fileKey": "xxxxxxxx"}]`).
 3. Pass the `fileKey` value to the `file_key` parameter of this tool.
 
-### 13. kintone Upload File
+### 14. kintone Upload File
 
 #### 1. Upload attachments and obtain file keys
 
@@ -501,8 +552,14 @@ When `records_mapping` is supplied, the tool also outputs `records_data`, a JSON
 If you provide `file_names`, you can override the filenames sent to kintone. Supply a single string for one file, or a JSON array (for example `["a.pdf", "b.pdf"]`) with the same number of entries as the files you upload.
 
 
-Example `records_mapping` payload (single record; if multiple files are uploaded, they are all attached to the same record):
+`records_mapping` expects a JSON object with a `records` array. Each element must include an `attachment_field` (string) and optional kintone fields under `record` plus any `updateKey`. How file keys are assigned is determined by the length of `records`:
 
+- If `records` has 1 item, **all uploaded files** are attached to that single record.
+- If `records` length equals the number of uploaded files, the tool assigns files **one-to-one in order**.
+
+Practical examples:
+
+1) Attach all files to one record with updateKey  
 ```json
 {
   "records": [
@@ -517,7 +574,51 @@ Example `records_mapping` payload (single record; if multiple files are uploaded
 }
 ```
 
-If multiple records are listed, the number of entries must match the number of uploaded files so each record receives one file key. When only a single record is provided, all uploaded file keys are added to that record’s attachment field regardless of the file count.
+2) Distribute files one-by-one across multiple records (upload 2 files -> define 2 records)  
+```json
+{
+  "records": [
+    {
+      "attachment_field": "添付ファイル",
+      "record": {
+        "タイトル": {"value": "議事録 A"}
+      }
+    },
+    {
+      "attachment_field": "添付ファイル",
+      "record": {
+        "タイトル": {"value": "議事録 B"}
+      }
+    }
+  ]
+}
+```
+
+3) Add extra fields per record while distributing files one-to-one  
+```json
+{
+  "records": [
+    {
+      "attachment_field": "ファイル",
+      "record": {
+        "部門": {"value": "営業"},
+        "担当者": {"value": "山田"}
+      }
+    },
+    {
+      "attachment_field": "ファイル",
+      "record": {
+        "部門": {"value": "開発"},
+        "担当者": {"value": "佐藤"}
+      }
+    }
+  ]
+}
+```
+
+Rules summary: `records` must be a non-empty array. Every element needs `attachment_field`; `record` defaults to `{}` if omitted. With multiple records, the array length must equal the uploaded file count so each record gets exactly one file key.
+
+Upsert behavior: when `updateKey` is provided, kintone will update the matching record or insert a new one if no match is found (upsert). If you omit `updateKey`, each entry is treated as a new record insert.
 
 If you prefer not to use `records_mapping`, you can build `records_data` manually with standard Dify nodes:
 
@@ -556,10 +657,6 @@ outputs["records_data"] = json.dumps({"records": records}, ensure_ascii=False)
 ```
 
 Using `records_mapping` bypasses all of these extra nodes/scripts so the workflow can simply be `kintone_upload_file → kintone_upsert_records` by selecting `nodes.upload_file_to_kintone.outputs.json.records_data` for the `records_data` parameter (or `text` if you prefer the raw JSON string).
-
-A text message describing the upload is also returned. For a single file you’ll see, for example, `Uploaded file 'report.pdf' successfully. fileKey: c15b3870-7505-4ab6-9d8d-b9bdbc74f5d6`; for multiple files the message lists the count plus the filenames and file keys (`Uploaded 2 files. Files: report1.pdf, report2.pdf / fileKeys: ...`).
-
-Optional parameter: specify `request_timeout` (seconds) to set the timeout for bulk requests (default 30 seconds).
 
 ## Privacy Policy
 

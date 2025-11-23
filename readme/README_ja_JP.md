@@ -1,19 +1,17 @@
-# kintone_integration
+# kintone レコードを読み書きする *非公式* のプラグイン
 
 **Author:** r3-yamauchi
-**Version:** 0.1.8
+**Version:** 0.1.9
 **Type:** tool
 
 ## Description
 
-これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを読み書きしたり、添付ファイルをアップロード/ダウンロードする際に便利な機能を提供する、**非公式**の [Dify](https://dify.ai/jp) 用ツール・プラグインです。
-
-> ⚠️ **注意: このプラグインは非公式です**  
-> このプラグインは kintone の提供元である サイボウズ が開発・保守しているものではありません。コミュニティによって開発された非公式のプラグインです。ご利用は自己責任でお願いいたします。
-
-ソースコードを [GitHub リポジトリ](https://github.com/r3-yamauchi/dify-kintone-plugin) で公開しています。
+これは [kintone](https://kintone.cybozu.co.jp/) アプリのレコードを読み書きしたり、添付ファイルをアップロード/ダウンロードする際に便利な機能を提供する、**非公式**の [Dify](https://dify.ai/jp) 用ツール・プラグインです。 ソースコードを [GitHub リポジトリ](https://github.com/r3-yamauchi/dify-kintone-plugin) で公開しています。
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/r3-yamauchi/dify-kintone-plugin)
+
+> ⚠️ **注意: このプラグインは非公式です**  
+> このプラグインは kintone の提供元である サイボウズ が開発・保守しているものではありません。コミュニティによって開発された非公式のプラグインです。ご利用は自己責任でお願いいたします。 サイボウズ公式のプラグインは [https://marketplace.dify.ai/plugins/cybozu/kintone](https://marketplace.dify.ai/plugins/cybozu/kintone) で公開されています。
 
 ## Features
 
@@ -21,11 +19,12 @@
 - kintoneのドメインとアプリIDを指定してフィールド定義を取得
 - kintoneのクエリ構文仕様文字列を取得
 - kintone レコード配列 JSON をフラット化
-- kintone_add_record向け`record_data`構文のリファレンスを取得
-- kintone_add_record向け`record_data`の内容を検証
 - kintoneのドメインとアプリIDを指定してレコードを1件新規追加
+- レコードIDまたはupdateKeyを指定してレコードを1件更新
+- `record_data`構文のリファレンスを取得
+- `record_data`の内容を検証
 - kintoneレコードのコメント欄へ（メンション付きで）投稿
-- kintoneのドメインとアプリIDを指定して複数レコードを一括追加・更新（upsert）
+- 複数レコードを一括追加・更新（upsert）
 - JSON文字列または配列からupdateKey付きのupsert用`records_data`を生成
 - JSON文字列または配列からkintoneテーブル(SUBTABLE)行構造を生成
 - fileKeyを指定してkintoneからファイルをダウンロード
@@ -51,7 +50,7 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
@@ -61,7 +60,7 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "query": "field1 >= 100"
 }
@@ -72,9 +71,9 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
-  "fields": "field1, field2, field3"
+  "fields": "field1,field2,field3"
 }
 ```
 
@@ -84,14 +83,16 @@ APIトークン以外の認証方式に対応していません。 Basic認証�
 
 | 値 | 挙動 |
 | --- | --- |
+| `both` (既定) | テキストと JSON をまとめて返却 |
 | `text_only` | テキストのみ |
 | `json_stream` | JSON をページ単位で逐次返却（テキストは省略） |
-| `both` (既定) | テキストと JSON をまとめて返却 |
+| `flattened_json` | kintoneレコードをフラットなオブジェクト配列に変換して返却 |
 
 レスポンス例は次の通りです。
 
 ```
 Text:
+
 取得したレコード件数: 12
 顧客名: ACME株式会社
 担当者: 山田
@@ -135,7 +136,7 @@ JSON:
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92"
 }
 ```
@@ -148,7 +149,7 @@ JSON:
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "detail_level": true
 }
@@ -253,7 +254,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": {
     "text_field": {"value": "サンプルテキスト"},
@@ -265,35 +266,87 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 任意パラメータ: `request_timeout`（秒）でAPIタイムアウトを変更できます。既定値は10秒です。
 
-### 6. kintone Validate Record Data
+### 6. kintone Update Record
 
-`kintone_add_record` に渡すための `record_data` JSON 文字列を、アプリのフィールド定義に基づいて検証します。
+既存レコードを1件更新します。対象レコードが存在しない場合はエラーになります。
+Upsert（レコードがなければ追加）する必要がある場合は `kintone_upsert_records` を使用してください。
+
+`record_data` の形式は `kintone_add_record` と同じで、指定したフィールドのみ更新されます。
+
+1) `record_id` を指定する場合
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "45",
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+2) `updateKey` を `{ "field": "...", "value": "..." }` 形式で指定する場合
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "updateKey": { "field": "顧客ID", "value": "CUST-001" },
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+3) `updateKey` にフィールドコードのみ、値は `updateKeyValue` で分けて指定する場合
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "updateKey": "顧客ID",
+  "updateKeyValue": "CUST-001",
+  "record_data": {
+    "メモ": {"value": "最新情報に更新しました"},
+    "ステータス": {"value": "対応中"}
+  }
+}
+```
+
+- `record_id` または `updateKey` のいずれかを指定してください。`updateKey` は上記 2) または 3) の形式を選べます。
+
+### 7. kintone Record Data Docs
+
+`kintone_add_record` や `kintone_update_record` で利用する `record_data` のJSON構文ガイドを返します。引数は不要で、サンプル構造、フィールドタイプ別ルール、バリデーション仕様、よくあるエラーを含む文章を返します。
+
+### 8. kintone Validate Record Data
+
+`kintone_add_record` や `kintone_update_record` に渡すための `record_data` JSON 文字列を、アプリのフィールド定義に基づいて問題がないかを検証します。
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "record_data": "{\"text_field\": {\"value\": \"サンプルテキスト\"}, \"number_field\": {\"value\": 100}}"
 }
 ```
 
-構造および型チェックを通過すると、整形済みの JSON をそのまま返します。検証に失敗した場合は、具体的なエラー内容をメッセージとして返します。
+構造および型チェックを通過すると、整形済みの JSON をそのまま返します。例えば `record_data` 内で指定されたフィールドが対象アプリに存在しないなどの理由で検証に失敗した場合は、具体的なエラー内容をメッセージとして返します。
 
-### 7. kintone Record Data Docs
-
-`kintone_add_record` で利用する `record_data` のJSON構文ガイドを返します。引数は不要で、サンプル構造、フィールドタイプ別ルール、プラグイン内部のバリデーション仕様、よくあるエラーを含む文章を返します。
-
-### 8. kintone Add Record Comment
+### 9. kintone Add Record Comment
 
 #### 1. レコードコメントを投稿する
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
-  "record_id": 456,
+  "record_id": "456",
   "comment_text": "見積書を更新しました。ご確認ください。",
   "mentions": "[{\"code\": \"sales-team\", \"type\": \"GROUP\"}]"
 }
@@ -303,21 +356,20 @@ kintoneのクエリ構文に関する説明文書を返します。
 
 成功時には以下の情報が得られます。
 
-- 変数 `comment_id`: 追加されたコメントID
 - 変数 `response`: kintoneが返したJSON（作成者やタイムスタンプを含む）
 - `json` 出力: `comment_id`, `record_id`, `app_id`, `mentions_count`, `created_at` をまとめたサマリー
 - `text` 出力: 投稿結果のメッセージ
 
 任意パラメータ: `request_timeout`（秒）でコメント投稿APIのタイムアウトを変更できます（既定値10秒）。
 
-### 9. kintone Upsert Records
+### 10. kintone Upsert Records
 
 #### 1. 複数のレコードを一度に追加する
 
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
@@ -345,7 +397,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 ```json
 {
   "kintone_domain": "dev-demo.cybozu.com",
-  "kintone_app_id": 123,
+  "kintone_app_id": "123",
   "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
   "records_data": {
     "records": [
@@ -374,7 +426,7 @@ kintoneのクエリ構文に関する説明文書を返します。
 }
 ```
 
-### 10. kintone Build Records Data
+### 11. kintone Build Records Data
 
 JSON文字列または配列のオブジェクトから、`kintone_upsert_records` が期待する `records_data` を生成し、指定した `updateKey` を自動で付与します。
 
@@ -410,7 +462,7 @@ JSON文字列または配列のオブジェクトから、`kintone_upsert_record
 }
 ```
 
-### 11. kintone Build Subtable Rows
+### 12. kintone Build Subtable Rows
 
 JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールドが受け付ける `rows` 形式に変換します。
 
@@ -446,7 +498,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 }
 ```
 
-### 12. kintone Download File
+### 13. kintone Download File
 
 #### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
 
@@ -465,7 +517,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
 3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
-### 13. kintone Upload File
+### 14. kintone Upload File
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 
@@ -504,8 +556,14 @@ records_mapping を指定すると、`records_data` という JSON 文字列も�
 任意パラメータ `file_names` を指定すると、kintone へ送信するファイル名を上書きできます。単一ファイル時は文字列、複数ファイル時はファイル数と同じ要素数の JSON 配列（例: `["a.pdf", "b.pdf"]`）を指定してください。
 
 
-records_mapping の例（1件のレコードにファイルを添付する場合。複数ファイルをアップロードした場合は同じレコードにまとめて添付されます）:
+`records_mapping` は `records` 配列を含む JSON です。各要素には必須の `attachment_field`（添付フィールド名）と、任意の `record`/`updateKey` を含められます。ファイルの割り当てルールは以下のとおりです。
 
+- `records` が1件のみ: アップロードした **全てのファイル** をその1件に添付。
+- `records` の件数 = アップロードしたファイル数: アップロード順に **1件ずつ** 対応付け。
+
+具体例:
+
+1) すべてのファイルを1件にまとめて添付（updateKey あり）
 ```json
 {
   "records": [
@@ -520,7 +578,51 @@ records_mapping の例（1件のレコードにファイルを添付する場合
 }
 ```
 
-複数のレコードを指定する場合、`records` の件数はアップロードしたファイル数と一致させてください（各レコードに1件の fileKey が割り当たります）。単一のレコードのみ指定した場合は、アップロードしたファイル数に関わらず全ての fileKey がそのレコードの添付フィールドに追加されます。
+2) ファイルを1つずつ別レコードへ割り当て（ファイル2件 → records も2件）
+```json
+{
+  "records": [
+    {
+      "attachment_field": "添付ファイル",
+      "record": {
+        "タイトル": {"value": "議事録 A"}
+      }
+    },
+    {
+      "attachment_field": "添付ファイル",
+      "record": {
+        "タイトル": {"value": "議事録 B"}
+      }
+    }
+  ]
+}
+```
+
+3) レコードごとに追加フィールドを入れつつ1対1で割り当て
+```json
+{
+  "records": [
+    {
+      "attachment_field": "ファイル",
+      "record": {
+        "部門": {"value": "営業"},
+        "担当者": {"value": "山田"}
+      }
+    },
+    {
+      "attachment_field": "ファイル",
+      "record": {
+        "部門": {"value": "開発"},
+        "担当者": {"value": "佐藤"}
+      }
+    }
+  ]
+}
+```
+
+ルールまとめ: `records` は空であってはならず、各要素に `attachment_field` が必須です。`record` は省略可能ですがオブジェクトである必要があります。`records` を複数指定する場合、配列の長さはアップロードしたファイル数と一致させてください（1件ずつ割り当て）。
+
+アップサート動作: `updateKey` を指定すると、該当レコードがあれば更新、なければ新規追加（Upsert）になります。`updateKey` を指定しない場合は常に新規レコードとして追加されます。
 
 `records_mapping` を使用しない場合は、Dify の標準ノードを積み上げて `records_data` を構築します。例えば以下のような構成です。
 

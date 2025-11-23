@@ -16,8 +16,10 @@ from .common import (
     normalize_api_tokens,
     normalize_app_id,
     normalize_domain,
+    parse_single_record_data,
     resolve_timeout,
     resolve_tool_parameter,
+    validate_record_structure,
 )
 
 
@@ -66,7 +68,7 @@ class KintoneAddRecordTool(Tool):
 
         # レコードデータをJSONとして解析
         try:
-            record_json = self._normalize_record_payload(record_data)
+            record_json = parse_single_record_data(record_data)
         except ValueError as error:
             yield self.create_text_message(str(error))
             return
@@ -91,7 +93,7 @@ class KintoneAddRecordTool(Tool):
         )
 
         # レコードデータの基本的な構造を検証
-        validation_errors = self._validate_record_structure(record_json)
+        validation_errors = validate_record_structure(record_json)
         if validation_errors:
             error_message = "レコードデータの構造が不正です:\n" + "\n".join(validation_errors)
             yield self.create_text_message(error_message)
@@ -184,54 +186,3 @@ class KintoneAddRecordTool(Tool):
             # 予期しないエラーの処理
             error_message = f"kintone API 呼び出し中に予期しないエラーが発生しました: {str(e)}"
             yield self.create_text_message(error_message)
-            
-    def _validate_record_structure(self, record_data: Dict[str, Any]) -> List[str]:
-        """
-        レコードデータの基本的な構造を検証する関数
-        
-        Args:
-            record_data: 検証するレコードデータ
-            
-        Returns:
-            エラーメッセージのリスト（空リストの場合は検証成功）
-        """
-        errors = []
-        
-        # レコードデータが辞書型であることを確認
-        if not isinstance(record_data, dict):
-            errors.append("レコードデータは辞書型である必要があります")
-            return errors
-            
-        # 各フィールドの構造を検証
-        for field_code, field_data in record_data.items():
-            # フィールドコードが文字列であることを確認
-            if not isinstance(field_code, str):
-                errors.append(f"フィールドコードは文字列である必要があります: {field_code}")
-                continue
-                
-            # フィールドデータが辞書型であることを確認
-            if not isinstance(field_data, dict):
-                errors.append(f"フィールド '{field_code}' のデータは辞書型である必要があります")
-                continue
-                
-            # valueキーが存在することを確認
-            if "value" not in field_data:
-                errors.append(f"フィールド '{field_code}' に 'value' キーがありません")
-                
-        return errors
-
-    def _normalize_record_payload(self, payload: Any) -> Dict[str, Any]:
-        """record_dataパラメータを辞書形式に正規化する。"""
-
-        if isinstance(payload, dict):
-            return payload
-
-        if isinstance(payload, str):
-            try:
-                parsed = json.loads(payload)
-            except json.JSONDecodeError:
-                raise ValueError("レコードデータが有効なJSON形式ではありません。正しいJSON形式で入力してください。") from None
-            if isinstance(parsed, dict):
-                return parsed
-
-        raise ValueError("レコードデータはJSONオブジェクト形式で指定してください。")

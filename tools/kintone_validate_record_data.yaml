@@ -4,11 +4,11 @@ identity:
   label:
     en_US: kintone Validate Record Data
     zh_Hans: kintone 记录数据验证
-    ja_JP: kintone record_data検証
+    ja_JP: record_dataの検証
 description:
   human:
     en_US: Validate record_data JSON before calling kintone_add_record
-    ja_JP: kintone_add_recordに渡すrecord_dataのJSONを事前検証します
+    ja_JP: "record_dataの内容に問題がないか検証します"
     zh_Hans: 在调用 kintone_add_record 前验证 record_data JSON
   llm: Validate the record_data JSON for kintone_add_record, returning the sanitized payload
 parameters:
@@ -28,15 +28,15 @@ parameters:
     form: llm
 
   - name: kintone_app_id
-    type: number
+    type: string
     required: true
     label:
       en_US: "kintone App ID"
       ja_JP: "kintone アプリID"
     human_description:
-      en_US: "The ID of your kintone application"
-      ja_JP: "使用するkintoneアプリのID"
-    llm_description: ID of the kintone app to validate against
+      en_US: "The ID of your kintone application. Accepts either a number or a numeric string; must represent a positive integer."
+      ja_JP: "対象アプリのアプリID"
+    llm_description: "ID of the kintone app to validate against (number or numeric string); must be a positive integer."
     form: llm
 
   - name: kintone_api_token
