@@ -87,7 +87,7 @@ class KintoneGetFieldsTool(Tool):
             method_override="GET",
         )
 
-        url = f"https://{kintone_domain}/k/v1/app/form/fields.json"
+        url = f"{kintone_domain}/k/v1/app/form/fields.json"
         request_body = {"app": normalized_app_id}
 
         cache_key = (f"{kintone_domain}:{normalized_app_id}", int(include_full))

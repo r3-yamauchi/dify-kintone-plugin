@@ -1,18 +1,18 @@
 identity:
-  name: kintone_add_record_comment
+  name: kintone_get_record_comments
   author: r3-yamauchi
   label:
-    en_US: kintone Add Record Comment
-    zh_Hans: kintone 添加记录评论
-    ja_JP: kintone レコードコメント追加
-    pt_BR: kintone Adicionar Comentário
+    en_US: kintone Get Record Comments
+    zh_Hans: kintone 获取记录评论
+    ja_JP: kintone レコードコメント取得
+    pt_BR: kintone Obter Comentários do Registro
 description:
   human:
-    en_US: Post a comment to a specific kintone record
-    zh_Hans: 向指定的 kintone 记录发布评论
-    ja_JP: 指定したkintoneレコードにコメントを投稿
-    pt_BR: Publique um comentário em um registro do kintone
-  llm: Add a comment to the specified kintone record, with optional mentions
+    en_US: Retrieve comments of a specific kintone record (supports paging)
+    zh_Hans: 获取指定 kintone 记录的评论（支持分页）
+    ja_JP: 指定したkintoneレコードのコメントを取得
+    pt_BR: Obtenha comentários de um registro do kintone (com paginação)
+  llm: Fetch comments from the specified kintone record; auto-paginates when limit is omitted or larger than 10
 parameters:
   - name: kintone_domain
     type: string
@@ -48,9 +48,9 @@ parameters:
       en_US: "kintone API Token"
       ja_JP: "kintone APIトークン"
     human_description:
-      en_US: "API token with comment permissions for the target app. Falls back to provider credentials when omitted."
+      en_US: "API token with comment view permissions for the target app. Falls back to provider credentials when omitted."
       ja_JP: "対象アプリのレコード閲覧権限を持つAPIトークン。省略時はプロバイダー設定の値を利用します。"
-    llm_description: API token that allows posting comments to the target app
+    llm_description: API token that allows fetching comments from the target app
     form: llm
 
   - name: record_id
@@ -61,32 +61,55 @@ parameters:
       ja_JP: "レコードID"
     human_description:
       en_US: "Record ID (numeric value in the record URL). Accepts number or numeric string; must be a positive integer."
-      ja_JP: "コメント対象のレコードID"
-    llm_description: "kintone record ID to post the comment to (number or numeric string); must be positive."
+      ja_JP: "コメント取得対象のレコードID"
+    llm_description: "kintone record ID to fetch comments for (number or numeric string); must be positive."
     form: llm
 
-  - name: comment_text
-    type: string
-    required: true
+  - name: order
+    type: select
+    required: false
+    default: "asc"
     label:
-      en_US: "Comment Text"
-      ja_JP: "コメント本文"
+      en_US: "Order"
+      ja_JP: "並び順"
     human_description:
-      en_US: "Plain text content for the comment (max 10,000 characters)"
-      ja_JP: "投稿するコメント本文（最大10,000文字）"
-    llm_description: Comment content to post to the record
+      en_US: "Sort order of comment IDs."
+      ja_JP: "コメントを古いものから順に取得する（昇順）か、新しいものから順に取得する（降順）か"
+    llm_description: Sort order for comment ID (`asc`/`desc`)
+    form: llm
+    options:
+      - value: "asc"
+        label:
+          en_US: Ascending
+          ja_JP: 昇順
+      - value: "desc"
+        label:
+          en_US: Descending
+          ja_JP: 降順
+
+  - name: offset
+    type: number
+    required: false
+    default: 0
+    label:
+      en_US: "Offset"
+      ja_JP: "オフセット"
+    human_description:
+      en_US: "Number of comments to skip from the start. Default 0."
+      ja_JP: "先頭からスキップする件数。既定値 0 （スキップしない）"
+    llm_description: Number of comments to skip (>=0)
     form: llm
 
-  - name: mentions
-    type: string
+  - name: limit
+    type: number
     required: false
     label:
-      en_US: "Mentions JSON"
-      ja_JP: "メンションJSON"
+      en_US: "Limit"
+      ja_JP: "取得件数"
     human_description:
-      en_US: "Optional JSON array of mention objects (e.g., [{\"code\":\"user1\",\"type\":\"USER\"}]). Supports USER, GROUP, ORGANIZATION."
-      ja_JP: "任意。メンション対象を示すJSON配列（例: [{\"code\":\"user1\",\"type\":\"USER\"}]）。USER/GROUP/ORGANIZATIONを指定可能です。"
-    llm_description: JSON string describing mention targets (USER/GROUP/ORGANIZATION)
+      en_US: "If omitted, all comments are fetched."
+      ja_JP: "未指定の場合はすべてのコメントを取得します"
+    llm_description: Comment count to fetch; omit or set >10 to fetch all with pagination
     form: llm
 
   - name: request_timeout
@@ -104,4 +127,4 @@ parameters:
 
 extra:
   python:
-    source: tools/kintone_add_record_comment.py
+    source: tools/kintone_get_record_comments.py

@@ -89,7 +89,7 @@ class KintoneUploadFileTool(Tool):
         except ValueError:
             yield self.create_text_message("request_timeout には正の数値を指定してください。")
             return
-        url = f"https://{kintone_domain}/k/v1/file.json"
+        url = f"{kintone_domain}/k/v1/file.json"
         headers = build_headers(kintone_api_token, content_type=None)
 
         yield log_parameters(

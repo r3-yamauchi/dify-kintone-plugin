@@ -1,7 +1,7 @@
 # kintone レコードを読み書きする *非公式* のプラグイン
 
 **Author:** r3-yamauchi
-**Version:** 0.1.9
+**Version:** 0.2.0
 **Type:** tool
 
 ## Description
@@ -24,6 +24,7 @@
 - `record_data`構文のリファレンスを取得
 - `record_data`の内容を検証
 - kintoneレコードのコメント欄へ（メンション付きで）投稿
+- レコードIDを指定してコメントを取得
 - 複数レコードを一括追加・更新（upsert）
 - JSON文字列または配列からupdateKey付きのupsert用`records_data`を生成
 - JSON文字列または配列からkintoneテーブル(SUBTABLE)行構造を生成
@@ -362,7 +363,39 @@ Upsert（レコードがなければ追加）する必要がある場合は `kin
 
 任意パラメータ: `request_timeout`（秒）でコメント投稿APIのタイムアウトを変更できます（既定値10秒）。
 
-### 10. kintone Upsert Records
+### 10. kintone Get Record Comments
+
+レコードIDを指定して、当該レコードに投稿されているコメントを取得します。
+`limit` パラメータを指定せず `offset` を既定値の 0 と指定した場合は、当該レコードの全てのコメントを取得します。
+
+#### 1. コメントIDの昇順で全件取得
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "456",
+  "order": "asc",
+  "offset": 0
+}
+```
+
+#### 2. 最新のものから順に（降順に） 15 件のみ取得
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "456",
+  "order": "desc",
+  "offset": 0,
+  "limit": 15
+}
+```
+
+### 11. kintone Upsert Records
 
 #### 1. 複数のレコードを一度に追加する
 
@@ -426,7 +459,7 @@ Upsert（レコードがなければ追加）する必要がある場合は `kin
 }
 ```
 
-### 11. kintone Build Records Data
+### 12. kintone Build Records Data
 
 JSON文字列または配列のオブジェクトから、`kintone_upsert_records` が期待する `records_data` を生成し、指定した `updateKey` を自動で付与します。
 
@@ -462,7 +495,7 @@ JSON文字列または配列のオブジェクトから、`kintone_upsert_record
 }
 ```
 
-### 12. kintone Build Subtable Rows
+### 13. kintone Build Subtable Rows
 
 JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールドが受け付ける `rows` 形式に変換します。
 
@@ -498,7 +531,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 }
 ```
 
-### 13. kintone Download File
+### 14. kintone Download File
 
 #### 1. ファイルキーを指定してkintoneからファイルをダウンロードする
 
@@ -517,7 +550,7 @@ JSON文字列または配列を、kintoneテーブル(SUBTABLE)フィールド�
 2. レスポンス内の添付ファイルフィールド値を確認（例：`"添付ファイル": [{"fileKey": "xxxxxxxx"}]`）
 3. `fileKey` の値を、このツールの `file_key` パラメータとして使用
 
-### 14. kintone Upload File
+### 15. kintone Upload File
 
 #### 1. 添付ファイルをアップロードして fileKey を取得する
 

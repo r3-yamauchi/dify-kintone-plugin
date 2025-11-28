@@ -100,7 +100,7 @@ class KintoneUpsertRecordsTool(Tool):
         headers = build_headers(kintone_api_token, method_override="PUT")
 
         # kintone のレコード一括更新/追加 API のエンドポイント
-        url = f"https://{kintone_domain}/k/v1/records.json"
+        url = f"{kintone_domain}/k/v1/records.json"
 
         try:
             # リクエスト用のJSONボディを作成

@@ -71,7 +71,7 @@ class KintoneDownloadFileTool(Tool):
         )
 
         # kintone のファイルダウンロード API のエンドポイント
-        url = f"https://{kintone_domain}/k/v1/file.json"
+        url = f"{kintone_domain}/k/v1/file.json"
 
         # クエリパラメータの設定
         params = {

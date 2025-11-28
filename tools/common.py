@@ -13,22 +13,27 @@ from typing import Any, Iterable, Mapping, MutableMapping, Sequence
 from dify_plugin import Tool
 from dify_plugin.entities.tool import ToolInvokeMessage
 
-USER_AGENT = "dify-kintone-plugin/0.1.9"
+USER_AGENT = "r3-yamauchi/dify-kintone-plugin/0.2.0"
 SENSITIVE_KEYS = {"kintone_api_token"}
 _MASKED = "***"
 MAX_LOG_PAYLOAD_CHARS = 4000
 
 
 def normalize_domain(raw_domain: Any) -> str:
-    """kintoneドメイン入力を正規化する。"""
+    """kintoneドメイン入力を正規化する。
+
+    - http:// または https:// で始まる場合はスキームを保持する
+    - スキームがない場合は https:// を先頭に自動付与する
+    - 末尾のスラッシュは除去する
+    """
 
     if not isinstance(raw_domain, str):
         raise ValueError("domain must be a string")
     domain = raw_domain.strip()
     if not domain:
         raise ValueError("domain is empty")
-    if domain.startswith(("http://", "https://")):
-        domain = domain.split("//", 1)[1]
+    if not domain.startswith(("http://", "https://")):
+        domain = f"https://{domain}"
     return domain.rstrip("/")
 
 

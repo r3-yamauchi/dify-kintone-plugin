@@ -1,9 +1,3 @@
-"""
-where: kintone_integration/tools/kintone_add_record_comment.py
-what: kintoneレコードへコメントを追加するDifyツールの実装
-why: チャットフローからレコードのコメント欄に投稿し、kintone内のコミュニケーションを自動化するため
-"""
-
 from __future__ import annotations
 
 import json
@@ -96,7 +90,7 @@ class KintoneAddRecordCommentTool(Tool):
         )
 
         headers = build_headers(kintone_api_token)
-        url = f"https://{kintone_domain}/k/v1/record/comment.json"
+        url = f"{kintone_domain}/k/v1/record/comment.json"
         request_body: dict[str, Any] = {
             "app": kintone_app_id,
             "record": record_id,

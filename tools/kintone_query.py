@@ -180,7 +180,7 @@ class KintoneTool(Tool):
         headers = build_headers(kintone_api_token, method_override="GET")
 
         # kintone のレコード取得 API のエンドポイント
-        url = f"https://{kintone_domain}/k/v1/records.json"
+        url = f"{kintone_domain}/k/v1/records.json"
 
         request_count = 0
 

@@ -113,7 +113,7 @@ class KintoneUpdateRecordTool(Tool):
             return
 
         headers = build_headers(kintone_api_token, method_override="PUT")
-        url = f"https://{kintone_domain}/k/v1/record.json"
+        url = f"{kintone_domain}/k/v1/record.json"
 
         try:
             request_body = {

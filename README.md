@@ -1,7 +1,7 @@
 # kintone_integration
 
 **Author:** r3-yamauchi
-**Version:** 0.1.9
+**Version:** 0.2.0
 **Type:** tool
 
 English | [Japanese](https://github.com/r3-yamauchi/dify-kintone-plugin/blob/main/readme/README_ja_JP.md)
@@ -25,6 +25,7 @@ This is an **unofficial** plugin for interacting with [kintone](https://kintone.
 - Retrieve the `record_data` syntax reference
 - Validate `record_data` with a dedicated tool before adding records
 - Post comments to an existing record with optional mentions
+- Retrieve comments of a record by specifying the record ID (auto-pagination supported)
 - Upsert (bulk insert/update) multiple records by specifying the kintone domain and app ID
 - Build kintone upsert `records_data` payloads from a JSON string or array input with automatic `updateKey`
 - Build kintone subtable rows (`value` array) from a JSON string or array input
@@ -361,7 +362,38 @@ When the call succeeds, the response includes:
 
 Optional parameter: `request_timeout` (seconds) to override the default 10-second timeout.
 
-### 10. kintone Upsert Records
+### 10. kintone Get Record Comments
+
+Fetch comments posted on a record by specifying its record ID. If you leave `limit` empty and `offset` at the default 0, all comments for the record are retrieved.
+
+#### 1. Fetch all comments in ascending comment ID order
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "456",
+  "order": "asc",
+  "offset": 0
+}
+```
+
+#### 2. Fetch only the latest 15 comments (descending)
+
+```json
+{
+  "kintone_domain": "dev-demo.cybozu.com",
+  "kintone_app_id": "123",
+  "kintone_api_token": "BuBNIwbRRaUvr33nWXcfUZ5VhaFsJxN0xH4NPN92",
+  "record_id": "456",
+  "order": "desc",
+  "offset": 0,
+  "limit": 15
+}
+```
+
+### 11. kintone Upsert Records
 
 #### 1. Add multiple records at once
 
@@ -425,7 +457,7 @@ Optional parameter: `request_timeout` (seconds) to override the default 10-secon
 }
 ```
 
-### 11. kintone Build Records Data
+### 12. kintone Build Records Data
 
 Convert a JSON string or array of objects into the `records_data` payload expected by `kintone_upsert_records`, automatically populating the `updateKey`.
 
@@ -461,7 +493,7 @@ Response example:
 }
 ```
 
-### 12. kintone Build Subtable Rows
+### 13. kintone Build Subtable Rows
 
 Transform a JSON string or array into the `value` array required by a kintone subtable field.
 
@@ -497,7 +529,7 @@ You can also submit an array directly:
 }
 ```
 
-### 13. kintone Download File
+### 14. kintone Download File
 
 #### 1. Download a file from kintone by specifying the file key
 
@@ -515,7 +547,7 @@ You can also submit an array directly:
 2. Check the attachment field in the response (for example: `"Attachment": [{"fileKey": "xxxxxxxx"}]`).
 3. Pass the `fileKey` value to the `file_key` parameter of this tool.
 
-### 14. kintone Upload File
+### 15. kintone Upload File
 
 #### 1. Upload attachments and obtain file keys
 

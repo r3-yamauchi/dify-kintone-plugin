@@ -17,10 +17,10 @@ parameters:
     required: false
     label:
       en_US: "kintone Domain"
-      ja_JP: "cybozu.com ドメイン"
+      ja_JP: "kintone ドメイン"
     human_description:
-      en_US: "Portion of your kintone URL after https:// (e.g., your-subdomain.cybozu.com). If left blank, the value from provider settings is used."
-      ja_JP: "kintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）。未入力の場合はプロバイダー設定で入力した値が使用されます。"
+      en_US: "Example: your-subdomain.cybozu.com or https://your-subdomain.cybozu.com. If left blank, the value from provider settings is used."
+      ja_JP: "例: your-subdomain.cybozu.com または https://your-subdomain.cybozu.com。未入力の場合はプロバイダー設定で入力した値が使用されます。"
     llm_description: kintone domain where the app is hosted
     placeholder:
       en_US: "your-subdomain.cybozu.com"

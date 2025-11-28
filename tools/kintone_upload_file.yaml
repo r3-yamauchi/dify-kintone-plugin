@@ -23,10 +23,10 @@ parameters:
       pt_BR: Domínio kintone
       ja_JP: kintone ドメイン
     human_description:
-      en_US: "Portion of your kintone URL after https:// (e.g., your-subdomain.cybozu.com). If left blank, the value from provider settings is used."
+      en_US: "Example: your-subdomain.cybozu.com or https://your-subdomain.cybozu.com. If left blank, the value from provider settings is used."
       zh_Hans: "kintone URL 中 https:// 之后的部分（例如 your-subdomain.cybozu.com）。留空时将使用提供者设置中的值。"
       pt_BR: "Parte da sua URL do kintone após https:// (ex.: your-subdomain.cybozu.com). Em branco, usa o valor definido no provedor."
-      ja_JP: "kintoneのURLのうち、https:// より後ろの部分（例: your-subdomain.cybozu.com）。未入力の場合はプロバイダー設定で入力した値が使用されます。"
+      ja_JP: "例: your-subdomain.cybozu.com または https://your-subdomain.cybozu.com。未入力の場合はプロバイダー設定で入力した値が使用されます。"
     llm_description: kintone domain to upload the file to
     placeholder:
       en_US: "your-subdomain.cybozu.com"

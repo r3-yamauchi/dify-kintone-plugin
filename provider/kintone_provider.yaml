@@ -43,7 +43,7 @@ credentials_for_provider:
       en_US: "Store the default API token with the required permissions."
       zh_Hans: "保存具有所需权限的默认 API 令牌。"
       pt_BR: "Armazene o token de API padrão com as permissões necessárias."
-      ja_JP: "必要な権限を持つデフォルトのAPIトークンを保存します。"
+      ja_JP: "APIトークンをカンマ区切りで9つまで登録できます。ここで登録しなくとも各ツールで個別に設定できます。"
     placeholder:
       en_US: "your-api-token1, api-token2, api-token3"
       zh_Hans: "your-api-token1, api-token2, api-token3"
@@ -54,6 +54,7 @@ tools:
   - tools/kintone_flatten_json.yaml
   - tools/kintone_add_record.yaml
   - tools/kintone_add_record_comment.yaml
+  - tools/kintone_get_record_comments.yaml
   - tools/kintone_update_record.yaml
   - tools/kintone_upsert_records.yaml
   - tools/kintone_download_file.yaml

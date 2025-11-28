@@ -109,7 +109,7 @@ class KintoneAddRecordTool(Tool):
         headers = build_headers(kintone_api_token)
 
         # kintone のレコード追加 API のエンドポイント
-        url = f"https://{kintone_domain}/k/v1/record.json"
+        url = f"{kintone_domain}/k/v1/record.json"
 
         try:
             # リクエスト用のJSONボディを作成
